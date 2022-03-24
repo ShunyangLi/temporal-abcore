@@ -75,12 +75,16 @@ void BiGraph::init(unsigned int num1, unsigned int num2) {
 }
 
 void BiGraph::loadGraph(const string& data_graph) {
-    int u, v, r;
-    long t;
+    int u, v, r, t;
 
     FILE * edgeGraph = fopen(data_graph.c_str(), "r");
 
-    while ((fscanf(edgeGraph, "%d %d %ld", &u, &v, &t)) != EOF) {
+    while ((r = fscanf(edgeGraph, "%d %d %d", &u, &v, &t)) != EOF) {
+        if (r != 3) {
+            fprintf(stderr, "Bad file format: u v t incorrect\n");
+            exit(1);
+        }
+
         if (num_edges == 0) {
             fprintf(stdout, "upper vertices: %d, lower vertices: %d, edges: %ld\n", u, v, t);
             init(u, v);
@@ -107,6 +111,9 @@ void BiGraph::loadGraph(const string& data_graph) {
 
     neighborHash_v1.clear();
     neighborHash_v2.clear();
+    tmax = time_new_to_old.size();
+    ucn.resize(num_v1);
+    vcn.resize(num_v2);
 }
 
 void BiGraph::addEdge(vid_t u, vid_t v) {
@@ -124,7 +131,7 @@ void BiGraph::addEdge(vid_t u, vid_t v) {
     neighborHash_v2[v].insert(u);
 
 }
-void BiGraph::addEdgeT(vid_t u, vid_t v, long t) {
+void BiGraph::addEdgeT(vid_t u, vid_t v, vid_t t) {
     edges.emplace_back(std::make_pair(u,v));
     if (time_new_to_old.empty()) {
         time_new_to_old.push_back(t);

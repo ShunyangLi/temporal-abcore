@@ -8,29 +8,29 @@
 #include <set>
 
 
-class Edge
-{
-public:
-    Edge(int u_, int v_) { u = u_; v = v_; }
-    bool operator<(const Edge &other) const
-    {
-        if (u == other.u)
-            return v < other.v;
-        return u < other.u;
-    }
-
-    int u;
-    int v;
-};
-
-
-class DegreeNode
-{
-public:
-    int id;
-    int degree;
-};
-
+//class Edge
+//{
+//public:
+//    Edge(int u_, int v_) { u = u_; v = v_; }
+//    bool operator<(const Edge &other) const
+//    {
+//        if (u == other.u)
+//            return v < other.v;
+//        return u < other.u;
+//    }
+//
+//    int u;
+//    int v;
+//};
+//
+//
+//class DegreeNode
+//{
+//public:
+//    int id;
+//    int degree;
+//};
+using namespace std;
 class BiGraph
 {
 
@@ -41,7 +41,7 @@ public:
     ~BiGraph() = default;
 
     void addEdge(vid_t u, vid_t v);
-    void addEdgeT(vid_t u, vid_t v, long t);
+    void addEdgeT(vid_t u, vid_t v, vid_t t);
     void deleteEdge(vid_t u, vid_t v);
     bool isEdge(vid_t u, vid_t v);
     [[nodiscard]] num_t getV1Num() const { return num_v1; }
@@ -65,13 +65,21 @@ public:
     std::vector<std::vector<vid_t>> neighbor_v2;
 
     // this part for timestamp
-    std::vector<long> time_new_to_old;
+    std::vector<vid_t> time_new_to_old;
     // edge index
-    std::vector<int> edges_idx;
-    std::vector<std::pair<int,int>> edges;
+    std::vector<vid_t> edges_idx;
+    std::vector<std::pair<vid_t,vid_t>> edges;
+    int tmax = 0;
 
-    std::vector<std::vector<std::pair<int,int>>> tnu;
-    std::vector<std::vector<std::pair<int,int>>> tnv;
+    std::vector<std::vector<std::pair<vid_t,vid_t>>> tnu;
+    std::vector<std::vector<std::pair<vid_t,vid_t>>> tnv;
+
+    // u, alpha, beta, timestamp
+    vector<vector<vector<vector<pair<vid_t,vid_t>>>>> u_index;
+    std::vector<std::vector<std::vector<std::vector<std::pair<vid_t,vid_t>>>>> v_index;
+
+    vector<unordered_map<int, int>> ucn;
+    vector<unordered_map<int, int>> vcn;
 
 
     std::vector<std::set<vid_t>> neighborHash_v1;

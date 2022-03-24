@@ -15,7 +15,6 @@ int main(int argc, char *argv[]) {
         chrono::duration<double> elapsed_seconds = end - start;
         cout << "loading graph: " << elapsed_seconds.count() << endl;
 
-        coreIndexKCore(g);
 
         if (input.cmdOptionExists("-query")) {
 

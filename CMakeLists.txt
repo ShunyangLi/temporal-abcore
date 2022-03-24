@@ -3,4 +3,4 @@ project(temporal-abcore)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(tabcore main.cpp abcore.h abcore.cpp utility.h utility.cpp bigraph.h bigraph.cpp)
+add_executable(tabcore main.cpp abcore.h abcore.cpp utility.h utility.cpp bigraph.h bigraph.cpp tabcore.cpp tabcore.h config.h)
