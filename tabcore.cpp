@@ -8,6 +8,7 @@
 #include "abcore.h"
 
 // computer core neighbor in ts to te
+// the core neighbor is the number of neighbors that in ts and te
 auto compute_core_neighbor(const vid_t& ts, vector<unordered_map<int, int>>& cn,
                            const num_t& num, vector<vector<pair<vid_t,vid_t>>> nu) -> void {
 
@@ -16,7 +17,6 @@ auto compute_core_neighbor(const vid_t& ts, vector<unordered_map<int, int>>& cn,
         for (auto index = nu[u].size() - 1; ts >= 0; index --) {
             auto v = nu[u][index].first;
             auto t = nu[u][index].second;
-
             // because time from largest to smallest
             if (t < ts) break;
 
@@ -24,6 +24,55 @@ auto compute_core_neighbor(const vid_t& ts, vector<unordered_map<int, int>>& cn,
 
         }
     }
+}
+
+
+/**
+ * delete edges for peeling ts to te
+ * @param g
+ */
+auto compute_del_edges(BiGraph& g, const vid_t& ts, const vid_t& te, vector<bool>& vu, vector<bool>& vv) -> void {
+    auto tg = g;
+    auto q = queue<pair<vid_t, vid_t>>();
+
+    // to do the loop delete edges
+    for (auto _te = tg.tmax; _te >= ts; --_te) {
+
+        // because there are may one more than one edge that between ts and te
+        for (auto index = tg.edges_idx[_te]; index < tg.edges_idx[_te + 1]; ++index) {
+            auto u = tg.edges[index].first;
+            auto v = tg.edges[index].second;
+
+            // then we process u and v
+            -- tg.ucn[u][v];
+            -- tg.vcn[v][u];
+
+            // it is one edge, so just detect only once
+            if (tg.ucn[u][v] < tg.left_index.size() || tg.vcn[v][u] < tg.right_index.size()) {
+                q.push(std::make_pair(u, v));
+                vu[u] = true;
+                vv[v] = true;
+            }
+        }
+
+        // then try to delete the edge, and check whether the core number changed
+        while (!q.empty()) {
+            auto const u_index = g.left_index[u];
+            auto const v_index = g.right_index[v];
+            auto v_size = g.neighbor_v2[v].size();
+            auto u_size = g.neighbor_v1[u].size();
+
+            auto afftect_u = vector<vector<vid_t>>(g.left_index.size());
+            auto afftect_v = vector<vector<vid_t>>(g.right_index.size());
+
+            update_bicore_index(g,u,v,addition, afftect_u, afftect_v);
+
+
+        }
+    }
+
+
+
 }
 
 
@@ -60,6 +109,8 @@ auto index_baseline(BiGraph& g) -> void  {
     // init the core neighbor number
     compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
     compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
+    auto vu = vector<bool>(g.num_v1, false);
+    auto vv = vector<bool>(g.num_v2, false);
 
     for (auto ts = 0; ts < g.tmax; ++ ts) {
         // then working here
@@ -67,6 +118,8 @@ auto index_baseline(BiGraph& g) -> void  {
         if (ts == g.tmax - 1) break;
         compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
         compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
+
+
 
     }
 

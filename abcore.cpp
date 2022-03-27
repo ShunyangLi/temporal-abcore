@@ -198,28 +198,32 @@ int coreIndexKCore(BiGraph& g) {
     return beta_s;
 }
 
+
+
 ///////////////////////////
 /// dynamic maintenance ///
 ///////////////////////////
 
-void dyn_crossUpdate_addition(BiGraph& g, int alpha, int k_x, vid_t v) {
+void dyn_crossUpdate_addition(BiGraph& g, int alpha, int k_x, vid_t v, vector<vector<vid_t>>& av) {
     for (int beta = k_x; beta > 0; beta--) {
         int oldalpha = g.right_index[v][beta];
         if (oldalpha < alpha) {
             g.right_index[v][beta] = alpha;
+            av[v].push_back(beta);
         }
         else {
             break;
         }
     }
 }
-void dyn_crossUpdate_deletion(BiGraph& g, int alpha, int k_x, vid_t v) {
+void dyn_crossUpdate_deletion(BiGraph& g, int alpha, int k_x, vid_t v, vector<vector<vid_t>>& av) {
     int newalpha = alpha - 1;
     int truedegree = g.neighbor_v2[v].size();
     for (int i = k_x; i <= truedegree; i++) {
         int oldalpha = g.right_index[v][i];
         if (oldalpha > newalpha) {
             g.right_index[v][i] = newalpha;
+            av[v].push_back(i);
         }
         else {
             break;
@@ -292,9 +296,12 @@ void compute_a_b_core(BiGraph& g, int alpha, int beta) {
         }
         right_vertices_to_be_peeled.clear();
     }
+
 }
 
-void update_index_with_fixed_left_k_deletion_with_limit_swap(BiGraph& g, int alpha, int tau_alpha, int start_bound, vid_t u, vid_t v) {
+void update_index_with_fixed_left_k_deletion_with_limit_swap(BiGraph& g, int alpha, int tau_alpha, int start_bound,
+                                                             vid_t ou, vid_t ov,
+                                                             vector<vector<vid_t>>& au, vector<vector<vid_t>>& av) {
     int beta = tau_alpha;
 
     compute_a_b_core(g, alpha, beta);
@@ -304,18 +311,19 @@ void update_index_with_fixed_left_k_deletion_with_limit_swap(BiGraph& g, int alp
             int oldbeta = g.left_index[u][alpha];
             if (oldbeta == beta) {
                 g.left_index[u][alpha] = beta - 1;
+                if (u != ou) au[u].push_back(alpha);
             }
         }
     }
     for (vid_t v = 0; v < g.num_v2; v++) {
         if (g.right_delete[v] && g.right_index[v].size() >= beta + 1) {
-            dyn_crossUpdate_deletion(g, alpha, beta, v);
+            dyn_crossUpdate_deletion(g, alpha, beta, v, av);
         }
     }
     // contrary to insertion
     int bound = start_bound;
-    if (g.left_index[u][alpha] > bound) {
-        g.left_index[u][alpha] = bound;
+    if (g.left_index[ou][alpha] > bound) {
+        g.left_index[ou][alpha] = bound;
     }
 }
 
@@ -393,9 +401,11 @@ int calculate_bound_for_right_node(BiGraph& g, vid_t v, int beta) {
     return k_index[k_index.size() - beta];
 }
 
-void update_index_with_fixed_left_k_addition_with_limit_swap(BiGraph& g, int alpha, int tau_alpha, vid_t u, vid_t v) {
-    if (tau_alpha > g.left_index[u][alpha]) {
-        g.left_index[u][alpha] = tau_alpha;
+void update_index_with_fixed_left_k_addition_with_limit_swap(BiGraph& g, int alpha, int tau_alpha,
+                                                             vid_t ou, vid_t ov,
+                                                             vector<vector<vid_t>>& au, vector<vector<vid_t>>& av) {
+    if (tau_alpha > g.left_index[ou][alpha]) {
+        g.left_index[ou][alpha] = tau_alpha;
     }
     int beta = tau_alpha;
     // compute alpha-beta+1-core
@@ -405,18 +415,21 @@ void update_index_with_fixed_left_k_addition_with_limit_swap(BiGraph& g, int alp
         if (!g.left_delete[u]) {
             int oldbeta = g.left_index[u][alpha];
             if (oldbeta < beta + 1) {
+                // TODO add affteced notes.
                 g.left_index[u][alpha] = beta + 1;
+                if (u != ou) au[u].push_back(alpha);
             }
         }
     }
     for (vid_t v = 0; v < g.num_v2; v++) {
         if (!g.right_delete[v]) {
-            dyn_crossUpdate_addition(g, alpha, beta + 1, v);
+            dyn_crossUpdate_addition(g, alpha, beta + 1, v, av);
         }
     }
 }
 
-double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition)
+double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition,
+                           vector<vector<vid_t>>& au, vector<vector<vid_t>>& av)
 {
     auto start = chrono::system_clock::now();
     // calculate swap threshold
@@ -522,8 +535,10 @@ double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition)
             int alpha = bound > ualpha ? ualpha : bound;
             tau_beta.push_back(alpha);
         }
+
+        // for u
         for (int alpha = 1; alpha <= th_alpha; alpha++) {
-            update_index_with_fixed_left_k_addition_with_limit_swap(g, alpha, tau_alpha[alpha], u, v);
+            update_index_with_fixed_left_k_addition_with_limit_swap(g, alpha, tau_alpha[alpha], u, v, au, av);
             // restore graph
             int left_degree_max, right_degree_max; left_degree_max = -1; right_degree_max = -1;
             fill_n(g.left_delete.begin(), g.left_delete.size(), false);
@@ -539,9 +554,11 @@ double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition)
             }
             g.v2_max_degree = right_degree_max;
         }
+
+        // for v
         inv(g);
         for (int alpha = 1; alpha <= th_beta; alpha++) {
-            update_index_with_fixed_left_k_addition_with_limit_swap(g, alpha, tau_beta[alpha], v, u);
+            update_index_with_fixed_left_k_addition_with_limit_swap(g, alpha, tau_beta[alpha], v, u, av, au);
             // restore graph
             int left_degree_max, right_degree_max; left_degree_max = -1; right_degree_max = -1;
             fill_n(g.left_delete.begin(), g.left_delete.size(), false);
@@ -623,7 +640,7 @@ double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition)
             beta_start_bound.push_back(bound);
         }
         for (int alpha = 1; alpha <= th_alpha; alpha++) {
-            update_index_with_fixed_left_k_deletion_with_limit_swap(g, alpha, alpha_start[alpha], alpha_start_bound[alpha], u, v);
+            update_index_with_fixed_left_k_deletion_with_limit_swap(g, alpha, alpha_start[alpha], alpha_start_bound[alpha], u, v, au, av);
             // restore graph
             int left_degree_max, right_degree_max; left_degree_max = -1; right_degree_max = -1;
             fill_n(g.left_delete.begin(), g.left_delete.size(), false);
@@ -641,7 +658,7 @@ double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition)
         }
         inv(g);
         for (int alpha = 1; alpha <= th_beta; alpha++) {
-            update_index_with_fixed_left_k_deletion_with_limit_swap(g, alpha, beta_start[alpha], beta_start_bound[alpha], v, u);
+            update_index_with_fixed_left_k_deletion_with_limit_swap(g, alpha, beta_start[alpha], beta_start_bound[alpha], v, u, av, au);
             // restore graph
             int left_degree_max, right_degree_max; left_degree_max = -1; right_degree_max = -1;
             fill_n(g.left_delete.begin(), g.left_delete.size(), false);
