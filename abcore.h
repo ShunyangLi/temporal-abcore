@@ -8,6 +8,6 @@ using namespace std;
 int coreIndexKCore(BiGraph& g);
 
 double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition,
-                           vector<vector<vid_t>>& au, vector<vector<vid_t>>& av);
+                           unordered_map<vid_t, vector<vid_t>>& au, unordered_map<vid_t, vector<vid_t>>& av);
 
 #endif

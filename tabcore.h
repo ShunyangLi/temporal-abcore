@@ -5,7 +5,9 @@
 #ifndef TEMPORAL_ABCORE_TABCORE_H
 #define TEMPORAL_ABCORE_TABCORE_H
 
-auto index_baseline() -> void;
+#include "bigraph.h"
+
+auto index_baseline(BiGraph& g) -> void ;
 
 
 #endif //TEMPORAL_ABCORE_TABCORE_H

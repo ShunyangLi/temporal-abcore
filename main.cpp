@@ -1,4 +1,5 @@
 #include "abcore.h"
+#include "tabcore.h"
 
 using namespace std;
 
@@ -15,13 +16,16 @@ int main(int argc, char *argv[]) {
         chrono::duration<double> elapsed_seconds = end - start;
         cout << "loading graph: " << elapsed_seconds.count() << endl;
 
+        cout << "starting baseline index consturction" << endl;
+        index_baseline(g);
 
-        if (input.cmdOptionExists("-query")) {
 
-        }
-        if (input.cmdOptionExists("-update")) {
-
-        }
+//        if (input.cmdOptionExists("-query")) {
+//
+//        }
+//        if (input.cmdOptionExists("-update")) {
+//
+//        }
     }
     else {
         cout << "missing argument: dataset (-dataset)" << endl;

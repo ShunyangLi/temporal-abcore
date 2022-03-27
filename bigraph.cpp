@@ -128,9 +128,13 @@ void BiGraph::addEdge(vid_t u, vid_t v) {
 //    num_edges++;
 
     neighborHash_v1[u].insert(v);
+    degree_v1[u] = neighborHash_v1[u].size();
+    if (degree_v1[u] > v1_max_degree) v1_max_degree = degree_v1[u];
     neighborHash_v2[v].insert(u);
-
+    degree_v2[v] = neighborHash_v2[v].size();
+    if (degree_v2[v] > v2_max_degree) v2_max_degree = degree_v2[v];
 }
+
 void BiGraph::addEdgeT(vid_t u, vid_t v, vid_t t) {
     edges.emplace_back(std::make_pair(u,v));
     if (time_new_to_old.empty()) {

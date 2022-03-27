@@ -204,7 +204,7 @@ int coreIndexKCore(BiGraph& g) {
 /// dynamic maintenance ///
 ///////////////////////////
 
-void dyn_crossUpdate_addition(BiGraph& g, int alpha, int k_x, vid_t v, vector<vector<vid_t>>& av) {
+void dyn_crossUpdate_addition(BiGraph& g, int alpha, int k_x, vid_t v, unordered_map<vid_t, vector<vid_t>>& av) {
     for (int beta = k_x; beta > 0; beta--) {
         int oldalpha = g.right_index[v][beta];
         if (oldalpha < alpha) {
@@ -216,7 +216,7 @@ void dyn_crossUpdate_addition(BiGraph& g, int alpha, int k_x, vid_t v, vector<ve
         }
     }
 }
-void dyn_crossUpdate_deletion(BiGraph& g, int alpha, int k_x, vid_t v, vector<vector<vid_t>>& av) {
+void dyn_crossUpdate_deletion(BiGraph& g, int alpha, int k_x, vid_t v, unordered_map<vid_t, vector<vid_t>>& av) {
     int newalpha = alpha - 1;
     int truedegree = g.neighbor_v2[v].size();
     for (int i = k_x; i <= truedegree; i++) {
@@ -301,7 +301,7 @@ void compute_a_b_core(BiGraph& g, int alpha, int beta) {
 
 void update_index_with_fixed_left_k_deletion_with_limit_swap(BiGraph& g, int alpha, int tau_alpha, int start_bound,
                                                              vid_t ou, vid_t ov,
-                                                             vector<vector<vid_t>>& au, vector<vector<vid_t>>& av) {
+                                                             unordered_map<vid_t, vector<vid_t>>& au, unordered_map<vid_t, vector<vid_t>>& av) {
     int beta = tau_alpha;
 
     compute_a_b_core(g, alpha, beta);
@@ -403,7 +403,7 @@ int calculate_bound_for_right_node(BiGraph& g, vid_t v, int beta) {
 
 void update_index_with_fixed_left_k_addition_with_limit_swap(BiGraph& g, int alpha, int tau_alpha,
                                                              vid_t ou, vid_t ov,
-                                                             vector<vector<vid_t>>& au, vector<vector<vid_t>>& av) {
+                                                             unordered_map<vid_t, vector<vid_t>>& au, unordered_map<vid_t, vector<vid_t>>& av) {
     if (tau_alpha > g.left_index[ou][alpha]) {
         g.left_index[ou][alpha] = tau_alpha;
     }
@@ -429,7 +429,7 @@ void update_index_with_fixed_left_k_addition_with_limit_swap(BiGraph& g, int alp
 }
 
 double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition,
-                           vector<vector<vid_t>>& au, vector<vector<vid_t>>& av)
+                           unordered_map<vid_t, vector<vid_t>>& au, unordered_map<vid_t, vector<vid_t>>& av)
 {
     auto start = chrono::system_clock::now();
     // calculate swap threshold
