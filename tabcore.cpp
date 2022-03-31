@@ -26,6 +26,7 @@ auto compute_core_neighbor(const vid_t& ts, vector<unordered_map<int, int>>& cn,
     }
 }
 
+// just set the index value based on ts and te, alpha, and beta
 auto update_index(vector<vector<vector<vector<pair<vid_t,vid_t>>>>>& index,
                   const int& ts, const int& te,
                   const vid_t& u, const int& alpha, const int& beta) -> void {
@@ -165,8 +166,8 @@ auto index_baseline(BiGraph& g) -> void  {
     }
 
     // init the core neighbor number
-//    compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
-//    compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
+    // compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
+    // compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
     auto vu = vector<bool>(g.num_v1, false);
     auto vv = vector<bool>(g.num_v2, false);
 
