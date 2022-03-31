@@ -45,15 +45,20 @@ auto update_index(vector<vector<vector<vector<pair<vid_t,vid_t>>>>>& index,
  * @param g
  */
 auto compute_del_edges(BiGraph& g, BiGraph& tg,
-                       const int& ts, vector<bool>& vu, vector<bool>& vv, ) -> void {
+                       const int& ts, vector<bool>& vu, vector<bool>& vv,
+                       const int& tmax, const bool& self) -> void {
 //    auto tg = g;
     auto q = queue<pair<vid_t, vid_t>>();
 
     // to do the loop delete edges
-    for (auto _te = tg.tmax - 1; _te >= ts; _te --) {
-
+    for (auto _te = tmax; _te >= ts; _te --) {
+        auto index = tg.edges_idx[_te];
+        if (self) {
+            if (_te - 1 < 0) index = 0;
+            else index = tg.edges_idx[_te - 1];
+        }
         // because there are may one more than one edge that between ts and te
-        for (auto index = tg.edges_idx[_te]; index < tg.edges_idx[_te + 1]; ++index) {
+        for (; index < tg.edges_idx[_te + 1]; ++index) {
             auto u = tg.edges[index].first;
             auto v = tg.edges[index].second;
 
@@ -183,10 +188,10 @@ auto index_baseline(BiGraph& g) -> void  {
         compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
 
         auto tg = g;
-        compute_del_edges(g, tg, ts, vu, vv);
+        compute_del_edges(g, tg, ts, vu, vv, g.tmax - 1, false);
 
         // delete the visited edges
-        if (ts < g.tmax) compute_del_edges(g, g, ts, vu, vv);
+        if (ts < g.tmax) compute_del_edges(g, g, ts, vu, vv, ts, true);
 
     }
 
