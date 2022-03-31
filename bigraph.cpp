@@ -111,7 +111,7 @@ void BiGraph::loadGraph(const string& data_graph) {
 
     neighborHash_v1.clear();
     neighborHash_v2.clear();
-    tmax = time_new_to_old.size();
+    tmax = time_new_to_old.size() - 1;
     ucn.resize(num_v1);
     vcn.resize(num_v2);
 }

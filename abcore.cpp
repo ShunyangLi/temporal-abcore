@@ -311,7 +311,7 @@ void update_index_with_fixed_left_k_deletion_with_limit_swap(BiGraph& g, int alp
             int oldbeta = g.left_index[u][alpha];
             if (oldbeta == beta) {
                 g.left_index[u][alpha] = beta - 1;
-                if (u != ou) au[u].push_back(alpha);
+                au[u].push_back(alpha);
             }
         }
     }
@@ -417,7 +417,7 @@ void update_index_with_fixed_left_k_addition_with_limit_swap(BiGraph& g, int alp
             if (oldbeta < beta + 1) {
                 // TODO add affteced notes.
                 g.left_index[u][alpha] = beta + 1;
-                if (u != ou) au[u].push_back(alpha);
+                au[u].push_back(alpha);
             }
         }
     }
