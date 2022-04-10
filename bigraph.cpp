@@ -234,3 +234,46 @@ void inv(BiGraph& g) {
     swap(g.v1_max_degree, g.v2_max_degree);
     swap(g.left_delete, g.right_delete);
 }
+
+/**
+ * convert the bipartite graph object into binary file
+ * @param g
+ * @param path the export path
+ */
+auto write_graph_bin(BiGraph& g, const string& path) -> void {
+
+    FILE* fout = fopen(path.c_str(), "wb");
+
+    cout << "Saving binary file" << endl;
+
+    // save basic information of graph
+    fwrite(&g.num_v1, sizeof(int), 1, fout);
+    fwrite(&g.num_v2, sizeof(int), 1, fout);
+    fwrite(&g.num_edges, sizeof(int), 1, fout);
+
+    // wirte edges
+    for (auto u = 0; u < g.num_v1; u ++) {
+        fwrite(&g.neighbor_v1[u][0], sizeof(int), g.degree_v1[u], fout);
+    }
+
+    for (auto v = 0; v < g.num_v2; v ++) {
+        fwrite(&g.neighbor_v2[v][0], sizeof(int), g.degree_v2[v], fout);
+    }
+
+    // write time old to new
+    fwrite(&g.time_new_to_old[0], sizeof(int), g.time_new_to_old.size(), fout);
+
+    // write edges_idx
+    fwrite(&g.edges_idx[0], sizeof(int), g.edges_idx.size(), fout);
+
+    // write edge with timestamp
+    for (auto u = 0; u < g.num_v1; u ++) {
+        fwrite(&g.tnu[u][0], 8, g.tnu[u].size(), fout);
+    }
+
+    for (auto v = 0; v < g.num_v2; v ++) {
+        fwrite(&g.tnv[v][0], 8, g.tnv[v].size(), fout);
+    }
+
+
+}
