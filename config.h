@@ -6,6 +6,9 @@
 #define TEMPORAL_ABCORE_CONFIG_H
 
 // to add whether use ifdef
-#define TEST
+#define INDEX_SIZE
+// mb style
+#define MBS
+
 
 #endif //TEMPORAL_ABCORE_CONFIG_H

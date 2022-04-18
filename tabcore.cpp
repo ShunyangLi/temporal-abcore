@@ -6,6 +6,47 @@
 #include "tabcore.h"
 #include "bigraph.h"
 #include "abcore.h"
+#include "config.h"
+
+/**
+ * compute the vertex storage index size
+ * @param g graph objext
+ */
+auto vertex_index_size(BiGraph& g) -> void {
+    double idx_size = 0;
+
+    // add the vertices size
+    idx_size += sizeof(int) * g.num_v1;
+
+    // then for each vertex compute the real usage
+    for (auto u = 0; u < g.num_v1; u ++) {
+        for (auto alpha = 1; alpha < g.u_index[u].size(); alpha ++) {
+            for (auto beta = 1; beta < g.u_index[u][alpha].size(); beta ++) {
+                idx_size += g.u_index[u][alpha][beta].size() * 2 * sizeof(int);
+            }
+        }
+    }
+
+    idx_size += sizeof(int) * g.num_v2;
+    for (auto v = 0; v < g.num_v2; v ++) {
+        for (auto beta = 1; beta < g.v_index[v].size(); beta ++ ) {
+            for (auto alpha = 1; alpha < g.v_index[v][beta].size(); alpha ++) {
+                idx_size += g.v_index[v][beta][alpha].size() * 2 * sizeof(int );
+            }
+        }
+    }
+
+    double graph_size = g.num_edges * 3 * sizeof(int) ;
+
+#ifdef MBS
+    cout << "Graph size: " << graph_size / 1024 / 1024 << " MB." << endl;
+    cout << "Index size: " << double (idx_size / 1024 / 1024) << " MB." << endl;
+#else
+    cout << "Graph size: " << graph_size << " bytes." << endl;
+    cout << "Index size: " << idx_size  << " bytes." << endl;
+#endif
+}
+
 
 auto compute_a_b_core_nodes(vector<vector<vid_t>>& nu, vector<vector<vid_t>>& nv,
                             int alpha, int beta,
@@ -332,4 +373,21 @@ auto index_baseline(BiGraph& g) -> void  {
     }
 
     cout << "finished baseline" << endl;
+
+#ifdef INDEX_SIZE
+    vertex_index_size(g);
+#endif
+}
+
+/**
+ * baseline for computing abcore
+ * @param g
+ */
+auto tabcore_baseline(BiGraph& g) -> void {
+    coreIndexKCore(g);
+
+    g.tbcore_uindex.resize(2);
+    g.tbcore_vindex.resize(2);
+
+    // then start peeling
 }

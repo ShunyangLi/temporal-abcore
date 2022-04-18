@@ -8,28 +8,14 @@
 #include <set>
 
 
-//class Edge
-//{
-//public:
-//    Edge(int u_, int v_) { u = u_; v = v_; }
-//    bool operator<(const Edge &other) const
-//    {
-//        if (u == other.u)
-//            return v < other.v;
-//        return u < other.u;
-//    }
-//
-//    int u;
-//    int v;
-//};
-//
-//
-//class DegreeNode
-//{
-//public:
-//    int id;
-//    int degree;
-//};
+// use vertex_block to record the vertices and ending time
+struct vertex_block {
+    int te;
+    std::vector<vid_t> nodeset;
+    // to record the max node that combine the componet
+    vertex_block* parent = nullptr;
+};
+
 using namespace std;
 class BiGraph
 {
@@ -77,6 +63,10 @@ public:
     // u, alpha, beta, timestamp
     vector<vector<vector<vector<pair<vid_t,vid_t>>>>> u_index;
     std::vector<std::vector<std::vector<std::vector<std::pair<vid_t,vid_t>>>>> v_index;
+
+    // record abcore subgraph, alpha, beta, ts -> records
+    vector<vector<vector<vertex_block*>>> tbcore_uindex;
+    vector<vector<vector<vertex_block*>>> tbcore_vindex;
 
     vector<unordered_map<int, int>> ucn;
     vector<unordered_map<int, int>> vcn;
