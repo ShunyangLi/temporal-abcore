@@ -193,6 +193,7 @@ auto compute_core_neighbor(const vid_t& ts, vector<unordered_map<int, int>>& cn,
         for (int index = nu[u].size() - 1; index >= 0; index --) {
             auto v = nu[u][index].first;
             auto t = nu[u][index].second;
+
             // because time from largest to smallest
             if (t < ts) break;
 
@@ -359,10 +360,11 @@ auto index_baseline(BiGraph& g) -> void  {
 
     for (auto ts = 0; ts < g.tmax; ++ ts) {
         // then working here
-
         if (ts == g.tmax - 1) break;
-        compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
-        compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
+
+        // count the neighbor in the time interval ts to te
+        compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);
+        compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
 
         auto tg = g;
         compute_del_edges(g, tg, ts, vu, vv, g.tmax - 1, false);
@@ -377,6 +379,7 @@ auto index_baseline(BiGraph& g) -> void  {
 #ifdef INDEX_SIZE
     vertex_index_size(g);
 #endif
+
 }
 
 /**
@@ -390,4 +393,13 @@ auto tabcore_baseline(BiGraph& g) -> void {
     g.tbcore_vindex.resize(2);
 
     // then start peeling
+    for (auto ts = 0; ts < g.tmax; ++ ts) {
+        // ts = te, then break
+        if (ts == g.tmax - 1) break;
+
+        // count the neighbor in the time interval ts to te
+        compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);
+        compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
+
+    }
 }
