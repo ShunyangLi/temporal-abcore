@@ -204,16 +204,17 @@ auto compute_core_neighbor(const vid_t& ts, vector<unordered_map<int, int>>& cn,
 }
 
 // just set the index value based on ts and te, alpha, and beta
-auto update_index(vector<vector<vector<vector<pair<vid_t,vid_t>>>>>& index,
+auto update_index(vector<vector<vector<vector<pair<int,int>>>>>& index,
                   const int& ts, const int& te,
                   const vid_t& u, const int& alpha, const int& beta, BiGraph& g) -> void {
 
     if (index[u][alpha][beta].empty()) {
-        index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts], g.time_new_to_old[te]));
+//        index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts], g.time_new_to_old[te]));
+        index[u][alpha][beta].push_back(make_pair(ts, te));
     } else {
         auto times = index[u][alpha][beta].back();
         if (te > times.second) {
-            index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts], g.time_new_to_old[te]));
+            index[u][alpha][beta].push_back(make_pair(ts, te));
         }
     }
 }
@@ -222,21 +223,16 @@ auto update_index(vector<vector<vector<vector<pair<vid_t,vid_t>>>>>& index,
  * delete edges for peeling ts to te
  * @param g
  */
-auto compute_del_edges(BiGraph& g, BiGraph& tg,
-                       const int& ts, vector<bool>& vu, vector<bool>& vv,
-                       const int& tmax, const bool& self) -> void {
+auto back_del_edges(BiGraph& g, BiGraph& tg,
+                    const int& ts, vector<bool>& vu, vector<bool>& vv,
+                    const int& tmax) -> void {
 //    auto tg = g;
     auto q = queue<pair<vid_t, vid_t>>();
 
     // to do the loop delete edges
     for (auto _te = tmax; _te >= ts; _te --) {
-        auto index = tg.edges_idx[_te];
-        if (self) {
-            if (_te - 1 < 0) index = 0;
-            else index = tg.edges_idx[_te - 1];
-        }
         // because there are may one more than one edge that between ts and te
-        for (; index < tg.edges_idx[_te + 1]; ++index) {
+        for (auto index = tg.edges_idx[_te]; index < tg.edges_idx[_te + 1]; ++index) {
             auto u = tg.edges[index].first;
             auto v = tg.edges[index].second;
 
@@ -270,7 +266,7 @@ auto compute_del_edges(BiGraph& g, BiGraph& tg,
             auto au = unordered_map<vid_t, vector<vid_t>>();
             auto av = unordered_map<vid_t, vector<vid_t>>();
 
-            update_bicore_index(tg, tu, tv, 0, au, av);
+            update_bicore_index(tg, tu, tv, DELETION, au, av);
 
             // then we just check whether the the core number is changed
             for (const pair<vid_t, vector<vid_t>>& it : au) {
@@ -316,9 +312,109 @@ auto compute_del_edges(BiGraph& g, BiGraph& tg,
             }
         }
     }
+}
 
 
+/**
+ * delete the used edge from front to end
+ */
+auto advance_del_edge(BiGraph& g, const int& ts, vector<bool>& vu, vector<bool>& vv,
+                       const int& tmax) -> void {
+//    auto tg = g;
+    auto q = queue<pair<vid_t, vid_t>>();
 
+    // to do the loop delete edges
+    for (auto _te = tmax; _te >= ts; _te --) {
+
+        auto index = g.edges_idx[_te];
+        if (_te - 1 < 0) index = 0;
+        else index = g.edges_idx[_te - 1];
+
+        // because there are may one more than one edge that between ts and te
+        for (; index < g.edges_idx[_te + 1]; ++index) {
+            auto u = g.edges[index].first;
+            auto v = g.edges[index].second;
+
+            // then we process u and v
+            -- g.ucn[u][v];
+            -- g.vcn[v][u];
+
+            if (g.ucn[u][v] == 0) g.ucn[u].erase(v);
+            if (g.vcn[v][u] == 0) g.vcn[v].erase(u);
+
+            // when the neighbors of u is less then a, then update
+            // it is one edge, so just detect only once
+            if (g.ucn[u].size() < g.left_index.size() || g.vcn[v].size() < g.right_index.size()) {
+                if (vu[u] && vv[v]) continue;
+                q.push(std::make_pair(u, v));
+                vu[u] = true;
+                vv[v] = true;
+            }
+        }
+
+        // then try to delete the edge, and check whether the core number changed
+        while (!q.empty()) {
+            auto edge = q.front();
+            q.pop();
+            auto tu = edge.first;
+            auto tv = edge.second;
+
+            auto const u_alpha_offset = g.left_index;
+            auto const v_beta_offset = g.right_index;
+
+            auto au = unordered_map<vid_t, vector<vid_t>>();
+            auto av = unordered_map<vid_t, vector<vid_t>>();
+
+            update_bicore_index(g, tu, tv, DELETION, au, av);
+
+            // then we just check whether the the core number is changed
+            for (const pair<vid_t, vector<vid_t>>& it : au) {
+                auto u = it.first;
+                auto changed_alpha = it.second;
+
+                // the alpha value of u becomes smaller
+                if (u_alpha_offset[u].size() > g.left_index[u].size()) {
+                    // then record it.
+                    for (auto alpha =  u_alpha_offset[u].size() - 1; alpha > g.left_index[u].size() - 1; --alpha) {
+                        auto beta = u_alpha_offset[u][alpha];
+//                        update_index(g.u_index, ts, -1, u, alpha, beta, g);
+                        g.u_index[u][alpha][beta].push_back(make_pair(ts, -1));
+                    }
+                }
+
+                for (auto alpha  = g.left_index[u].size() - 1; alpha >= 1; --alpha) {
+                    if (g.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
+                        auto beta = u_alpha_offset[u][alpha];
+//                        update_index(g.u_index, ts, -1, u, alpha, beta, g);
+                        g.u_index[u][alpha][beta].push_back(make_pair(ts, -1));
+                    }
+                }
+            }
+
+            for (const pair<vid_t, vector<vid_t>>& it : av) {
+                auto v = it.first;
+                auto changed_alpha = it.second;
+
+                // the alpha value of u becomes smaller
+                if (v_beta_offset[v].size() > g.right_index[v].size()) {
+                    // then record it.
+                    for (auto beta =  v_beta_offset[v].size() - 1; beta > g.right_index[v].size() - 1; --beta) {
+                        auto alpha = v_beta_offset[v][beta];
+//                        update_index(g.v_index, ts, _te, v, beta, alpha, g);
+                        g.v_index[v][beta][alpha].push_back(make_pair(ts, -1));
+                    }
+                }
+
+                for (int beta  = g.right_index[v].size() - 1; beta >= 1; beta --) {
+                    if (g.right_index[v][beta] != v_beta_offset[v][beta]) {
+                        auto alpha = v_beta_offset[v][beta];
+//                        update_index(g.v_index, ts, _te, v, beta, alpha, g);
+                        g.v_index[v][beta][alpha].push_back(make_pair(ts, -1));
+                    }
+                }
+            }
+        }
+    }
 }
 
 
@@ -367,10 +463,10 @@ auto index_baseline(BiGraph& g) -> void  {
         compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
 
         auto tg = g;
-        compute_del_edges(g, tg, ts, vu, vv, g.tmax - 1, false);
+        back_del_edges(g, tg, ts, vu, vv, g.tmax - 1);
 
         // delete the visited edges
-        if (ts < g.tmax) compute_del_edges(g, g, ts, vu, vv, ts, true);
+        if (ts < g.tmax) advance_del_edge(g, ts, vu, vv, ts);
 
     }
 

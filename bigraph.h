@@ -61,8 +61,8 @@ public:
     std::vector<std::vector<std::pair<vid_t,vid_t>>> tnv;
 
     // u, alpha, beta, timestamp
-    vector<vector<vector<vector<pair<vid_t,vid_t>>>>> u_index;
-    std::vector<std::vector<std::vector<std::vector<std::pair<vid_t,vid_t>>>>> v_index;
+    vector<vector<vector<vector<pair<int,int>>>>> u_index;
+    std::vector<std::vector<std::vector<std::vector<std::pair<int,int>>>>> v_index;
 
     // record abcore subgraph, alpha, beta, ts -> records
     vector<vector<vector<vertex_block*>>> tbcore_uindex;

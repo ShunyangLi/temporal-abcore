@@ -10,5 +10,7 @@
 // mb style
 #define MBS
 
+#define DELETION 0
+
 
 #endif //TEMPORAL_ABCORE_CONFIG_H

@@ -86,7 +86,7 @@ void BiGraph::loadGraph(const string& data_graph) {
         }
 
         if (num_edges == 0) {
-            fprintf(stdout, "upper vertices: %d, lower vertices: %d, edges: %ld\n", u, v, t);
+            fprintf(stdout, "upper vertices: %d, lower vertices: %d, edges: %d\n", u, v, t);
             init(u, v);
             num_edges = t;
             continue;
