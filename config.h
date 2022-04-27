@@ -11,6 +11,7 @@
 #define MBS
 
 #define DELETION 0
+#define END -1
 
 
 #endif //TEMPORAL_ABCORE_CONFIG_H

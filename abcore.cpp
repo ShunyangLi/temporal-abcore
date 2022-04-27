@@ -204,26 +204,27 @@ int coreIndexKCore(BiGraph& g) {
 /// dynamic maintenance ///
 ///////////////////////////
 
-void dyn_crossUpdate_addition(BiGraph& g, int alpha, int k_x, vid_t v, unordered_map<vid_t, vector<vid_t>>& av) {
+void dyn_crossUpdate_addition(BiGraph& g, int alpha, int k_x, vid_t v, vector<vid_t>& av) {
     for (int beta = k_x; beta > 0; beta--) {
         int oldalpha = g.right_index[v][beta];
         if (oldalpha < alpha) {
             g.right_index[v][beta] = alpha;
-            av[v].push_back(beta);
+            av.push_back(v);
         }
         else {
             break;
         }
     }
 }
-void dyn_crossUpdate_deletion(BiGraph& g, int alpha, int k_x, vid_t v, unordered_map<vid_t, vector<vid_t>>& av) {
+void dyn_crossUpdate_deletion(BiGraph& g, int alpha, int k_x, vid_t v, vector<vid_t>& av) {
     int newalpha = alpha - 1;
     int truedegree = g.neighbor_v2[v].size();
     for (int i = k_x; i <= truedegree; i++) {
         int oldalpha = g.right_index[v][i];
         if (oldalpha > newalpha) {
             g.right_index[v][i] = newalpha;
-            av[v].push_back(i);
+            av.push_back(i);
+//            av[v].push_back(i);
         }
         else {
             break;
@@ -301,7 +302,7 @@ void compute_a_b_core(BiGraph& g, int alpha, int beta) {
 
 void update_index_with_fixed_left_k_deletion_with_limit_swap(BiGraph& g, int alpha, int tau_alpha, int start_bound,
                                                              vid_t ou, vid_t ov,
-                                                             unordered_map<vid_t, vector<vid_t>>& au, unordered_map<vid_t, vector<vid_t>>& av) {
+                                                             vector<vid_t>& au, vector<vid_t>& av) {
     int beta = tau_alpha;
 
     compute_a_b_core(g, alpha, beta);
@@ -311,7 +312,8 @@ void update_index_with_fixed_left_k_deletion_with_limit_swap(BiGraph& g, int alp
             int oldbeta = g.left_index[u][alpha];
             if (oldbeta == beta) {
                 g.left_index[u][alpha] = beta - 1;
-                au[u].push_back(alpha);
+                au.push_back(u);
+//                au[u].push_back(alpha);
             }
         }
     }
@@ -403,7 +405,7 @@ int calculate_bound_for_right_node(BiGraph& g, vid_t v, int beta) {
 
 void update_index_with_fixed_left_k_addition_with_limit_swap(BiGraph& g, int alpha, int tau_alpha,
                                                              vid_t ou, vid_t ov,
-                                                             unordered_map<vid_t, vector<vid_t>>& au, unordered_map<vid_t, vector<vid_t>>& av) {
+                                                             vector<vid_t>& au, vector<vid_t>& av) {
     if (tau_alpha > g.left_index[ou][alpha]) {
         g.left_index[ou][alpha] = tau_alpha;
     }
@@ -415,9 +417,8 @@ void update_index_with_fixed_left_k_addition_with_limit_swap(BiGraph& g, int alp
         if (!g.left_delete[u]) {
             int oldbeta = g.left_index[u][alpha];
             if (oldbeta < beta + 1) {
-                // TODO add affteced notes.
                 g.left_index[u][alpha] = beta + 1;
-                au[u].push_back(alpha);
+                au.push_back(u);
             }
         }
     }
@@ -429,7 +430,7 @@ void update_index_with_fixed_left_k_addition_with_limit_swap(BiGraph& g, int alp
 }
 
 double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition,
-                           unordered_map<vid_t, vector<vid_t>>& au, unordered_map<vid_t, vector<vid_t>>& av)
+                           vector<vid_t>& au, vector<vid_t>& av)
 {
     auto start = chrono::system_clock::now();
     // calculate swap threshold
@@ -677,6 +678,8 @@ double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition,
         inv(g);
         g.left_index[u].pop_back();
         g.right_index[v].pop_back();
+        au.push_back(u);
+        av.push_back(v);
     }
     auto end = chrono::system_clock::now();
     chrono::duration<double> elapsed_seconds = end - start;

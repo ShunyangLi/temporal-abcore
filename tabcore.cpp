@@ -196,9 +196,7 @@ auto compute_core_neighbor(const vid_t& ts, vector<unordered_map<int, int>>& cn,
 
             // because time from largest to smallest
             if (t < ts) break;
-
             cn[u][v] += 1;
-
         }
     }
 }
@@ -215,6 +213,7 @@ auto update_index(vector<vector<vector<vector<pair<int,int>>>>>& index,
         auto times = index[u][alpha][beta].back();
         if (te > times.second) {
             index[u][alpha][beta].push_back(make_pair(ts, te));
+//            index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts], g.time_new_to_old[te]));
         }
     }
 }
@@ -231,10 +230,14 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
 
     // to do the loop delete edges
     for (auto _te = tmax; _te >= ts; _te --) {
+
+        if (_te == 14) {
+            cout << "here" << endl;
+        }
         // because there are may one more than one edge that between ts and te
         for (auto index = tg.edges_idx[_te]; index < tg.edges_idx[_te + 1]; ++index) {
-            auto u = tg.edges[index].first;
-            auto v = tg.edges[index].second;
+            auto u = tg.edges[index - 1].first;
+            auto v = tg.edges[index - 1].second;
 
             // then we process u and v
             -- tg.ucn[u][v];
@@ -263,37 +266,46 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
             auto const u_alpha_offset = tg.left_index;
             auto const v_beta_offset = tg.right_index;
 
-            auto au = unordered_map<vid_t, vector<vid_t>>();
-            auto av = unordered_map<vid_t, vector<vid_t>>();
+            auto au = vector<vid_t>();
+            auto av = vector<vid_t>();
+
 
             update_bicore_index(tg, tu, tv, DELETION, au, av);
 
             // then we just check whether the the core number is changed
-            for (const pair<vid_t, vector<vid_t>>& it : au) {
-                auto u = it.first;
-                auto changed_alpha = it.second;
+            for (auto const & u : set<vid_t>(au.begin(), au.end())) {
 
-                // the alpha value of u becomes smaller
-                if (u_alpha_offset[u].size() > tg.left_index[u].size()) {
-                    // then record it.
-                    for (auto alpha =  u_alpha_offset[u].size() - 1; alpha > tg.left_index[u].size() - 1; --alpha) {
-                        auto beta = u_alpha_offset[u][alpha];
-                        update_index(g.u_index, ts, _te, u, alpha, beta, g);
-                    }
-                }
+                for (auto alpha = u_alpha_offset[u].size() - 1; alpha >= 1; --alpha) {
+                    auto beta = u_alpha_offset[u][alpha];
 
-                for (auto alpha  = tg.left_index[u].size() - 1; alpha >= 1; --alpha) {
-                    if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
-                        auto beta = u_alpha_offset[u][alpha];
-                        update_index(g.u_index, ts, _te, u, alpha, beta, g);
+                    for (; beta >= 1; beta --) {
+                        if (alpha > tg.left_index[u].size() - 1) update_index(g.u_index, ts, _te, u, alpha, beta, g);
+                        else {
+                            if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha]) update_index(g.u_index, ts, _te, u, alpha, beta, g);
+                            else break;
+                        }
                     }
+
+
                 }
+//                // the alpha value of u becomes smaller
+//                if (u_alpha_offset[u].size() > tg.left_index[u].size()) {
+//                    // then record it.
+//                    for (auto alpha =  u_alpha_offset[u].size() - 1; alpha > tg.left_index[u].size() - 1; --alpha) {
+//                        auto beta = u_alpha_offset[u][alpha];
+//                        update_index(g.u_index, ts, _te, u, alpha, beta, g);
+//                    }
+//                }
+//
+//                for (auto alpha  = tg.left_index[u].size() - 1; alpha >= 1; --alpha) {
+//                    if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
+//                        auto beta = u_alpha_offset[u][alpha];
+//                        update_index(g.u_index, ts, _te, u, alpha, beta, g);
+//                    }
+//                }
             }
 
-            for (const pair<vid_t, vector<vid_t>>& it : av) {
-                auto v = it.first;
-                auto changed_alpha = it.second;
-
+            for (auto const & v: set<vid_t>(av.begin(), av.end())) {
                 // the alpha value of u becomes smaller
                 if (v_beta_offset[v].size() > tg.right_index[v].size()) {
                     // then record it.
@@ -319,98 +331,95 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
  * delete the used edge from front to end
  */
 auto advance_del_edge(BiGraph& g, const int& ts, vector<bool>& vu, vector<bool>& vv,
-                       const int& tmax) -> void {
+                       const int& _te) -> void {
 //    auto tg = g;
     auto q = queue<pair<vid_t, vid_t>>();
 
-    // to do the loop delete edges
-    for (auto _te = tmax; _te >= ts; _te --) {
+    auto index = g.edges_idx[_te];
 
-        auto index = g.edges_idx[_te];
-        if (_te - 1 < 0) index = 0;
-        else index = g.edges_idx[_te - 1];
+    if (_te - 1 < 0) index = 0;
+    else index = g.edges_idx[_te - 1];
 
-        // because there are may one more than one edge that between ts and te
-        for (; index < g.edges_idx[_te + 1]; ++index) {
-            auto u = g.edges[index].first;
-            auto v = g.edges[index].second;
+    // because there are may one more than one edge that between ts and te
+    for (; index < g.edges_idx[_te + 1]; ++index) {
+        auto u = g.edges[index].first;
+        auto v = g.edges[index].second;
 
-            // then we process u and v
-            -- g.ucn[u][v];
-            -- g.vcn[v][u];
+        // then we process u and v
+        -- g.ucn[u][v];
+        -- g.vcn[v][u];
 
-            if (g.ucn[u][v] == 0) g.ucn[u].erase(v);
-            if (g.vcn[v][u] == 0) g.vcn[v].erase(u);
+        if (g.ucn[u][v] == 0) g.ucn[u].erase(v);
+        if (g.vcn[v][u] == 0) g.vcn[v].erase(u);
 
-            // when the neighbors of u is less then a, then update
-            // it is one edge, so just detect only once
-            if (g.ucn[u].size() < g.left_index.size() || g.vcn[v].size() < g.right_index.size()) {
-                if (vu[u] && vv[v]) continue;
-                q.push(std::make_pair(u, v));
-                vu[u] = true;
-                vv[v] = true;
+        // when the neighbors of u is less then a, then update
+        // it is one edge, so just detect only once
+        if (g.ucn[u].size() < g.left_index.size() || g.vcn[v].size() < g.right_index.size()) {
+            if (vu[u] && vv[v]) continue;
+            q.push(std::make_pair(u, v));
+            vu[u] = true;
+            vv[v] = true;
+        }
+    }
+
+    // then try to delete the edge, and check whether the core number changed
+    while (!q.empty()) {
+        auto edge = q.front();
+        q.pop();
+        auto tu = edge.first;
+        auto tv = edge.second;
+
+        auto const u_alpha_offset = g.left_index;
+        auto const v_beta_offset = g.right_index;
+
+        auto au = vector<vid_t>();
+        auto av = vector<vid_t>();
+
+        update_bicore_index(g, tu, tv, DELETION, au, av);
+
+        // then we just check whether the the core number is changed
+        for (auto const& u : au) {
+//            auto u = it.first;
+//            auto changed_alpha = it.second;
+
+            // the alpha value of u becomes smaller
+            if (u_alpha_offset[u].size() > g.left_index[u].size()) {
+                // then record it.
+                for (auto alpha =  u_alpha_offset[u].size() - 1; alpha > g.left_index[u].size() - 1; --alpha) {
+                    auto beta = u_alpha_offset[u][alpha];
+//                        update_index(g.u_index, ts, -1, u, alpha, beta, g);
+                    g.u_index[u][alpha][beta].push_back(make_pair(ts, END));
+                }
+            }
+
+            for (auto alpha  = g.left_index[u].size() - 1; alpha >= 1; --alpha) {
+                if (g.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
+                    auto beta = u_alpha_offset[u][alpha];
+//                        update_index(g.u_index, ts, -1, u, alpha, beta, g);
+                    g.u_index[u][alpha][beta].push_back(make_pair(ts, END));
+                }
             }
         }
 
-        // then try to delete the edge, and check whether the core number changed
-        while (!q.empty()) {
-            auto edge = q.front();
-            q.pop();
-            auto tu = edge.first;
-            auto tv = edge.second;
+        for (auto const& v : av) {
+//            auto v = it.first;
+//            auto changed_alpha = it.second;
 
-            auto const u_alpha_offset = g.left_index;
-            auto const v_beta_offset = g.right_index;
-
-            auto au = unordered_map<vid_t, vector<vid_t>>();
-            auto av = unordered_map<vid_t, vector<vid_t>>();
-
-            update_bicore_index(g, tu, tv, DELETION, au, av);
-
-            // then we just check whether the the core number is changed
-            for (const pair<vid_t, vector<vid_t>>& it : au) {
-                auto u = it.first;
-                auto changed_alpha = it.second;
-
-                // the alpha value of u becomes smaller
-                if (u_alpha_offset[u].size() > g.left_index[u].size()) {
-                    // then record it.
-                    for (auto alpha =  u_alpha_offset[u].size() - 1; alpha > g.left_index[u].size() - 1; --alpha) {
-                        auto beta = u_alpha_offset[u][alpha];
-//                        update_index(g.u_index, ts, -1, u, alpha, beta, g);
-                        g.u_index[u][alpha][beta].push_back(make_pair(ts, -1));
-                    }
-                }
-
-                for (auto alpha  = g.left_index[u].size() - 1; alpha >= 1; --alpha) {
-                    if (g.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
-                        auto beta = u_alpha_offset[u][alpha];
-//                        update_index(g.u_index, ts, -1, u, alpha, beta, g);
-                        g.u_index[u][alpha][beta].push_back(make_pair(ts, -1));
-                    }
+            // the alpha value of u becomes smaller
+            if (v_beta_offset[v].size() > g.right_index[v].size()) {
+                // then record it.
+                for (auto beta =  v_beta_offset[v].size() - 1; beta > g.right_index[v].size() - 1; --beta) {
+                    auto alpha = v_beta_offset[v][beta];
+//                        update_index(g.v_index, ts, _te, v, beta, alpha, g);
+                    g.v_index[v][beta][alpha].push_back(make_pair(ts, END));
                 }
             }
 
-            for (const pair<vid_t, vector<vid_t>>& it : av) {
-                auto v = it.first;
-                auto changed_alpha = it.second;
-
-                // the alpha value of u becomes smaller
-                if (v_beta_offset[v].size() > g.right_index[v].size()) {
-                    // then record it.
-                    for (auto beta =  v_beta_offset[v].size() - 1; beta > g.right_index[v].size() - 1; --beta) {
-                        auto alpha = v_beta_offset[v][beta];
+            for (int beta  = g.right_index[v].size() - 1; beta >= 1; beta --) {
+                if (g.right_index[v][beta] != v_beta_offset[v][beta]) {
+                    auto alpha = v_beta_offset[v][beta];
 //                        update_index(g.v_index, ts, _te, v, beta, alpha, g);
-                        g.v_index[v][beta][alpha].push_back(make_pair(ts, -1));
-                    }
-                }
-
-                for (int beta  = g.right_index[v].size() - 1; beta >= 1; beta --) {
-                    if (g.right_index[v][beta] != v_beta_offset[v][beta]) {
-                        auto alpha = v_beta_offset[v][beta];
-//                        update_index(g.v_index, ts, _te, v, beta, alpha, g);
-                        g.v_index[v][beta][alpha].push_back(make_pair(ts, -1));
-                    }
+                    g.v_index[v][beta][alpha].push_back(make_pair(ts, END));
                 }
             }
         }
