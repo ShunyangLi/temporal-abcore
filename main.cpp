@@ -17,15 +17,8 @@ int main(int argc, char *argv[]) {
         chrono::duration<double> elapsed_seconds = end - start;
         cout << "loading graph: " << elapsed_seconds.count() << endl;
 
-        cout << "starting baseline index consturction" << endl;
-
-        start = chrono::system_clock::now();
 //        index_baseline(g);
         tabcore_baseline(g);
-        end = chrono::system_clock::now();
-        elapsed_seconds = end - start;
-
-        cout << "baseline construction time: " << elapsed_seconds.count() << endl;
 
 //        if (input.cmdOptionExists("-query")) {
 //

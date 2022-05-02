@@ -1,8 +1,7 @@
 import os
 import argparse
-from platform import node
 
-SPLITOR = '      '
+SPLITOR = '	'
 
 def process_graph(data_graph, output, skip):
     filepath = os.getcwd()
@@ -47,8 +46,15 @@ def process_graph(data_graph, output, skip):
 
     edges_count = 0
     nodes = ""
+
+    egt = {}
+    c = 0
     for (u, v, t) in edges:
-        nodes += "{} {} {}\n".format(u_node[u], v_node[v], t)
+        if t not in egt:
+            egt[t] = c
+            c += 1
+        
+        nodes += "{} {} {}\n".format(u_node[u], v_node[v], egt[t])
         edges_count += 1
 
     temp = "{} {} {}\n".format(len(u_node), len(v_node), edges_count)

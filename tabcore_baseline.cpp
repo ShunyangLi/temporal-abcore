@@ -22,6 +22,11 @@ auto tab_vertex_index_size(BiGraph& g) -> void {
             idx_size += sizeof(int) * g.tbcore_uindex[alpha][beta].size() - 1;
 
             for (auto ts = 0; ts < g.tbcore_uindex[alpha][beta].size(); ts ++) {
+                if (g.tbcore_uindex[alpha][beta][ts].empty()) {
+                    idx_size -= sizeof(int);
+                    break;
+                }
+
                 auto block = g.tbcore_uindex[alpha][beta][ts].front();
 
                 while (block != nullptr) {
@@ -273,6 +278,7 @@ auto tabcore_baseline(BiGraph& g) -> void {
     g.tbcore_uindex.resize(2);
     g.tbcore_vindex.resize(2);
 
+    auto start = chrono::system_clock::now();
     // then start peeling
     for (auto ts = 0; ts < g.tmax; ++ ts) {
         // then working here
@@ -287,9 +293,15 @@ auto tabcore_baseline(BiGraph& g) -> void {
 
         // delete the visited edges
         if (ts < g.tmax) tab_advance_del_edge(g, ts, ts);
+//        cout << "ts: " << ts << endl;
     }
 
     cout << "finished temporal abcore baseline" << endl;
+
+    auto end = chrono::system_clock::now();
+    chrono::duration<double> elapsed_seconds = end - start;
+    cout << "construction: " << elapsed_seconds.count() << endl;
+
 
 #ifdef INDEX_SIZE
     tab_vertex_index_size(g);

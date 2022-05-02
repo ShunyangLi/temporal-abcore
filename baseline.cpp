@@ -437,6 +437,8 @@ auto index_baseline(BiGraph& g) -> void  {
     // init the core neighbor number
     // compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
     // compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
+    auto start = chrono::system_clock::now();
+
     for (auto ts = 0; ts < g.tmax; ++ ts) {
         // then working here
         if (ts == g.tmax - 1) break;
@@ -454,6 +456,9 @@ auto index_baseline(BiGraph& g) -> void  {
     }
 
     cout << "finished baseline" << endl;
+    auto end = chrono::system_clock::now();
+    chrono::duration<double> elapsed_seconds = end - start;
+    cout << "construction: " << elapsed_seconds.count() << endl;
 
 #ifdef INDEX_SIZE
     vertex_index_size(g);
