@@ -3,7 +3,7 @@
 // used to create temporal abcore
 //
 
-#include "tabcore.h"
+#include "baseline.h"
 #include "bigraph.h"
 #include "abcore.h"
 #include "config.h"
@@ -461,24 +461,3 @@ auto index_baseline(BiGraph& g) -> void  {
 
 }
 
-/**
- * baseline for computing abcore
- * @param g
- */
-auto tabcore_baseline(BiGraph& g) -> void {
-    coreIndexKCore(g);
-
-    g.tbcore_uindex.resize(2);
-    g.tbcore_vindex.resize(2);
-
-    // then start peeling
-    for (auto ts = 0; ts < g.tmax; ++ ts) {
-        // ts = te, then break
-        if (ts == g.tmax - 1) break;
-
-        // count the neighbor in the time interval ts to te
-        compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);
-        compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
-
-    }
-}

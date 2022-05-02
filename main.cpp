@@ -1,5 +1,6 @@
 #include "abcore.h"
-#include "tabcore.h"
+#include "baseline.h"
+#include "tabcore_baseline.h"
 
 using namespace std;
 
@@ -17,7 +18,8 @@ int main(int argc, char *argv[]) {
         cout << "loading graph: " << elapsed_seconds.count() << endl;
 
         cout << "starting baseline index consturction" << endl;
-        index_baseline(g);
+//        index_baseline(g);
+        tabcore_baseline(g);
 
 
 //        if (input.cmdOptionExists("-query")) {
