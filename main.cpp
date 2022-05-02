@@ -18,9 +18,14 @@ int main(int argc, char *argv[]) {
         cout << "loading graph: " << elapsed_seconds.count() << endl;
 
         cout << "starting baseline index consturction" << endl;
+
+        start = chrono::system_clock::now();
 //        index_baseline(g);
         tabcore_baseline(g);
+        end = chrono::system_clock::now();
+        elapsed_seconds = end - start;
 
+        cout << "baseline construction time: " << elapsed_seconds.count() << endl;
 
 //        if (input.cmdOptionExists("-query")) {
 //
@@ -28,6 +33,7 @@ int main(int argc, char *argv[]) {
 //        if (input.cmdOptionExists("-update")) {
 //
 //        }
+        return 0;
     }
     else {
         cout << "missing argument: dataset (-dataset)" << endl;

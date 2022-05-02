@@ -13,23 +13,45 @@
 auto tab_vertex_index_size(BiGraph& g) -> void {
     double idx_size = 0;
 
-    // add the vertices size
-    idx_size += sizeof(int) * g.num_v1;
+    // compute the index size for upper index and lower index
+    idx_size += sizeof(int) * g.tbcore_uindex.size();
 
-    // then for each vertex compute the real usage
-    for (auto u = 0; u < g.num_v1; u ++) {
-        for (auto alpha = 1; alpha < g.u_index[u].size(); alpha ++) {
-            for (auto beta = 1; beta < g.u_index[u][alpha].size(); beta ++) {
-                idx_size += g.u_index[u][alpha][beta].size() * 2 * sizeof(int);
+    for (auto alpha = 1; alpha < g.tbcore_uindex.size(); alpha ++) {
+        idx_size += sizeof(int) * g.tbcore_uindex[alpha].size() - 1;
+        for (auto beta = 1; beta < g.tbcore_uindex[alpha].size(); beta ++) {
+            idx_size += sizeof(int) * g.tbcore_uindex[alpha][beta].size() - 1;
+
+            for (auto ts = 0; ts < g.tbcore_uindex[alpha][beta].size(); ts ++) {
+                auto block = g.tbcore_uindex[alpha][beta][ts].front();
+
+                while (block != nullptr) {
+                    idx_size += sizeof(int);
+                    idx_size += sizeof(vertex_block) * 2;
+                    idx_size += block->nodeset.size() * sizeof(int );
+                    block = block->child;
+                }
             }
         }
     }
 
-    idx_size += sizeof(int) * g.num_v2;
-    for (auto v = 0; v < g.num_v2; v ++) {
-        for (auto beta = 1; beta < g.v_index[v].size(); beta ++ ) {
-            for (auto alpha = 1; alpha < g.v_index[v][beta].size(); alpha ++) {
-                idx_size += g.v_index[v][beta][alpha].size() * 2 * sizeof(int );
+    idx_size += sizeof(int) * g.tbcore_vindex.size();
+    for (auto beta = 1; beta < g.tbcore_vindex.size(); beta ++) {
+        idx_size += sizeof(int) * g.tbcore_vindex[beta].size() - 1;
+        for (auto alpha = 1; alpha < g.tbcore_vindex[beta].size(); alpha ++) {
+            idx_size += sizeof(int) * g.tbcore_vindex[beta][alpha].size();
+
+            for (auto ts = 0; ts < g.tbcore_vindex[beta][alpha].size(); ts ++) {
+                if (g.tbcore_vindex[beta][alpha][ts].empty()) {
+                    idx_size -= sizeof(int);
+                    break;
+                }
+                auto block = g.tbcore_vindex[beta][alpha][ts].front();
+                while (block != nullptr) {
+                    idx_size += sizeof(int);
+                    idx_size += sizeof(vertex_block) * 2;
+                    idx_size += block->nodeset.size() * sizeof(int );
+                    block = block->child;
+                }
             }
         }
     }
