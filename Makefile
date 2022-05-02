@@ -1,15 +1,15 @@
 CC=g++
 CPPFLAGS=-I.
 LDFLAGS=-g
-DEPS = bigraph.h utility.h abcore.h coreTree.h uf.h query.h baseline.h tabcore_baseline.h
-OBJ = bigraph.o main.o utility.o abcore.o coreTree.o uf.o query.o baseline.o tabcore_baseline.o
+DEPS = bigraph.h utility.h abcore.h baseline.h tabcore_baseline.h
+OBJ = bigraph.o main.o utility.o abcore.o baseline.o tabcore_baseline.o
 
 %.o: %.cpp $(DEPS)
-        $(CC) -std=c++1y $(LDFLAGS) -c -O3 -o $@ $< $(CPPFLAGS)
+	$(CC) -std=c++1y $(LDFLAGS) -c -O3 -o $@ $< $(CPPFLAGS)
 
 tabcore: $(OBJ)
-        $(CC) -std=c++1y $(LDFLAGS) -O3 -pthread -o $@ $^ $(CPPFLAGS)
+	$(CC) -std=c++1y $(LDFLAGS) -O3 -pthread -o $@ $^ $(CPPFLAGS)
 
 
 clean :
-        rm -f query *.o%
+	rm -f tabcore *.o
