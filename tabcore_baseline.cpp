@@ -307,3 +307,13 @@ auto tabcore_baseline(BiGraph& g) -> void {
     tab_vertex_index_size(g);
 #endif
 }
+
+
+/**
+ * Given a ts, te and alpha beta value, we aim to find the (a,b)-core vertices
+ * in G[ts,te]
+ */
+auto query(const int& ts, const int& te, const int& alpha, const int& beta, vector<bool>& node_u,
+           vector<bool>& node_v, BiGraph& g) -> void {
+
+}
