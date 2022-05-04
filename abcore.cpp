@@ -466,12 +466,12 @@ double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition,
                 }
             }
             if (!deleted) {
-                cout << "illegal deletion 1" << endl;
+//                cout << "illegal deletion 1" << endl;
                 return 0;
             }
         }
         else {
-            cout << "illegal deletion 2" << endl;
+//            cout << "illegal deletion 2" << endl;
             return 0;
         }
     }

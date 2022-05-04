@@ -3,7 +3,7 @@
 // used to create temporal abcore
 //
 
-#include "tabcore.h"
+#include "baseline.h"
 #include "bigraph.h"
 #include "abcore.h"
 #include "config.h"
@@ -223,17 +223,13 @@ auto update_index(vector<vector<vector<vector<pair<int,int>>>>>& index,
  * @param g
  */
 auto back_del_edges(BiGraph& g, BiGraph& tg,
-                    const int& ts, vector<bool>& vu, vector<bool>& vv,
-                    const int& tmax) -> void {
+                    const int& ts, const int& tmax) -> void {
 //    auto tg = g;
     auto q = queue<pair<vid_t, vid_t>>();
 
     // to do the loop delete edges
     for (auto _te = tmax; _te >= ts; _te --) {
 
-        if (_te == 14) {
-            cout << "here" << endl;
-        }
         // because there are may one more than one edge that between ts and te
         for (auto index = tg.edges_idx[_te]; index < tg.edges_idx[_te + 1]; ++index) {
             auto u = tg.edges[index - 1].first;
@@ -248,11 +244,8 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
 
             // when the neighbors of u is less then a, then update
             // it is one edge, so just detect only once
-            if (tg.ucn[u].size() < tg.left_index.size() || tg.vcn[v].size() < tg.right_index.size()) {
-                if (vu[u] && vv[v]) continue;
+            if (tg.ucn[u].size() < tg.left_index[u].size() - 1 || tg.vcn[v].size() < tg.right_index[v].size() - 1) {
                 q.push(std::make_pair(u, v));
-                vu[u] = true;
-                vv[v] = true;
             }
         }
 
@@ -280,7 +273,8 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
                     for (; beta >= 1; beta --) {
                         if (alpha > tg.left_index[u].size() - 1) update_index(g.u_index, ts, _te, u, alpha, beta, g);
                         else {
-                            if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha]) update_index(g.u_index, ts, _te, u, alpha, beta, g);
+                            if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha])
+                                update_index(g.u_index, ts, _te, u, alpha, beta, g);
                             else break;
                         }
                     }
@@ -312,13 +306,11 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
 /**
  * delete the used edge from front to end
  */
-auto advance_del_edge(BiGraph& g, const int& ts, vector<bool>& vu, vector<bool>& vv,
-                       const int& _te) -> void {
+auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
 //    auto tg = g;
     auto q = queue<pair<vid_t, vid_t>>();
 
     auto index = g.edges_idx[_te];
-
     if (_te - 1 < 0) index = 0;
     else index = g.edges_idx[_te - 1];
 
@@ -327,20 +319,25 @@ auto advance_del_edge(BiGraph& g, const int& ts, vector<bool>& vu, vector<bool>&
         auto u = g.edges[index].first;
         auto v = g.edges[index].second;
 
-        // then we process u and v
-        -- g.ucn[u][v];
-        -- g.vcn[v][u];
+        for (auto it = g.tnu[u].begin(); it != g.tnu[u].end(); ++it) {
+            if (it->first == v && it->second == _te) {
+                g.tnu[u].erase(it);
+                break;
+            }
+        }
 
-        if (g.ucn[u][v] == 0) g.ucn[u].erase(v);
-        if (g.vcn[v][u] == 0) g.vcn[v].erase(u);
+        for (auto it = g.tnv[v].begin(); it != g.tnv[v].end(); ++it) {
+            if (it->first == u && it->second == _te) {
+                g.tnv[v].erase(it);
+                break;
+            }
+        }
+
 
         // when the neighbors of u is less then a, then update
         // it is one edge, so just detect only once
-        if (g.ucn[u].size() < g.left_index.size() || g.vcn[v].size() < g.right_index.size()) {
-            if (vu[u] && vv[v]) continue;
+        if (g.tnu[u].size() < g.left_index[u].size() - 1 || g.tnv[v].size() < g.right_index[v].size() - 1) {
             q.push(std::make_pair(u, v));
-            vu[u] = true;
-            vv[v] = true;
         }
     }
 
@@ -361,47 +358,42 @@ auto advance_del_edge(BiGraph& g, const int& ts, vector<bool>& vu, vector<bool>&
 
         // then we just check whether the the core number is changed
         for (auto const& u : au) {
-//            auto u = it.first;
-//            auto changed_alpha = it.second;
-
             // the alpha value of u becomes smaller
             if (u_alpha_offset[u].size() > g.left_index[u].size()) {
                 // then record it.
                 for (auto alpha =  u_alpha_offset[u].size() - 1; alpha > g.left_index[u].size() - 1; --alpha) {
                     auto beta = u_alpha_offset[u][alpha];
-//                        update_index(g.u_index, ts, -1, u, alpha, beta, g);
-                    g.u_index[u][alpha][beta].push_back(make_pair(ts, END));
+                    if (!g.u_index[u][alpha][beta].empty() && g.u_index[u][alpha][beta].back().second == END) continue;
+                    g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts + 1], END));
                 }
             }
 
             for (auto alpha  = g.left_index[u].size() - 1; alpha >= 1; --alpha) {
                 if (g.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
                     auto beta = u_alpha_offset[u][alpha];
-//                        update_index(g.u_index, ts, -1, u, alpha, beta, g);
-                    g.u_index[u][alpha][beta].push_back(make_pair(ts, END));
+                    if (!g.u_index[u][alpha][beta].empty() && g.u_index[u][alpha][beta].back().second == END) continue;
+                    g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts + 1], END));
                 }
             }
         }
 
         for (auto const& v : av) {
-//            auto v = it.first;
-//            auto changed_alpha = it.second;
-
             // the alpha value of u becomes smaller
             if (v_beta_offset[v].size() > g.right_index[v].size()) {
                 // then record it.
                 for (auto beta =  v_beta_offset[v].size() - 1; beta > g.right_index[v].size() - 1; --beta) {
                     auto alpha = v_beta_offset[v][beta];
-//                        update_index(g.v_index, ts, _te, v, beta, alpha, g);
-                    g.v_index[v][beta][alpha].push_back(make_pair(ts, END));
+                    if (!g.v_index[v][beta][alpha].empty() && g.v_index[v][beta][alpha].back().second == END) continue;
+                    g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+
                 }
             }
 
             for (int beta  = g.right_index[v].size() - 1; beta >= 1; beta --) {
                 if (g.right_index[v][beta] != v_beta_offset[v][beta]) {
                     auto alpha = v_beta_offset[v][beta];
-//                        update_index(g.v_index, ts, _te, v, beta, alpha, g);
-                    g.v_index[v][beta][alpha].push_back(make_pair(ts, END));
+                    if (!g.v_index[v][beta][alpha].empty() && g.v_index[v][beta][alpha].back().second == END) continue;
+                    g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[ts + 1], END));
                 }
             }
         }
@@ -442,8 +434,7 @@ auto index_baseline(BiGraph& g) -> void  {
     // init the core neighbor number
     // compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
     // compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
-    auto vu = vector<bool>(g.num_v1, false);
-    auto vv = vector<bool>(g.num_v2, false);
+    auto start = chrono::system_clock::now();
 
     for (auto ts = 0; ts < g.tmax; ++ ts) {
         // then working here
@@ -454,14 +445,17 @@ auto index_baseline(BiGraph& g) -> void  {
         compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
 
         auto tg = g;
-        back_del_edges(g, tg, ts, vu, vv, g.tmax - 1);
+        back_del_edges(g, tg, ts, g.tmax - 1);
 
         // delete the visited edges
-        if (ts < g.tmax) advance_del_edge(g, ts, vu, vv, ts);
+        if (ts < g.tmax) advance_del_edge(g, ts, ts);
 
     }
 
     cout << "finished baseline" << endl;
+    auto end = chrono::system_clock::now();
+    chrono::duration<double> elapsed_seconds = end - start;
+    cout << "construction: " << elapsed_seconds.count() << endl;
 
 #ifdef INDEX_SIZE
     vertex_index_size(g);
@@ -469,24 +463,3 @@ auto index_baseline(BiGraph& g) -> void  {
 
 }
 
-/**
- * baseline for computing abcore
- * @param g
- */
-auto tabcore_baseline(BiGraph& g) -> void {
-    coreIndexKCore(g);
-
-    g.tbcore_uindex.resize(2);
-    g.tbcore_vindex.resize(2);
-
-    // then start peeling
-    for (auto ts = 0; ts < g.tmax; ++ ts) {
-        // ts = te, then break
-        if (ts == g.tmax - 1) break;
-
-        // count the neighbor in the time interval ts to te
-        compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);
-        compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
-
-    }
-}

@@ -14,6 +14,7 @@ struct vertex_block {
     std::vector<vid_t> nodeset;
     // to record the max node that combine the componet
     vertex_block* parent = nullptr;
+    vertex_block* child = nullptr;
 };
 
 using namespace std;
@@ -65,8 +66,8 @@ public:
     std::vector<std::vector<std::vector<std::vector<std::pair<int,int>>>>> v_index;
 
     // record abcore subgraph, alpha, beta, ts -> records
-    vector<vector<vector<vertex_block*>>> tbcore_uindex;
-    vector<vector<vector<vertex_block*>>> tbcore_vindex;
+    vector<vector<vector<vector<vertex_block*>>>> tbcore_uindex;
+    vector<vector<vector<vector<vertex_block*>>>> tbcore_vindex;
 
     vector<unordered_map<int, int>> ucn;
     vector<unordered_map<int, int>> vcn;
