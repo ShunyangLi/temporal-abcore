@@ -2,7 +2,7 @@ import os
 import argparse
 from platform import node
 
-SPLITOR = '      '
+SPLITOR = '	'
 
 def process_graph(data_graph, output, skip):
     filepath = os.getcwd()

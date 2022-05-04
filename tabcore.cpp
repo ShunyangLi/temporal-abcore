@@ -274,7 +274,6 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
 
             // then we just check whether the the core number is changed
             for (auto const & u : set<vid_t>(au.begin(), au.end())) {
-
                 for (auto alpha = u_alpha_offset[u].size() - 1; alpha >= 1; --alpha) {
                     auto beta = u_alpha_offset[u][alpha];
 
@@ -285,24 +284,7 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
                             else break;
                         }
                     }
-
-
                 }
-//                // the alpha value of u becomes smaller
-//                if (u_alpha_offset[u].size() > tg.left_index[u].size()) {
-//                    // then record it.
-//                    for (auto alpha =  u_alpha_offset[u].size() - 1; alpha > tg.left_index[u].size() - 1; --alpha) {
-//                        auto beta = u_alpha_offset[u][alpha];
-//                        update_index(g.u_index, ts, _te, u, alpha, beta, g);
-//                    }
-//                }
-//
-//                for (auto alpha  = tg.left_index[u].size() - 1; alpha >= 1; --alpha) {
-//                    if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
-//                        auto beta = u_alpha_offset[u][alpha];
-//                        update_index(g.u_index, ts, _te, u, alpha, beta, g);
-//                    }
-//                }
             }
 
             for (auto const & v: set<vid_t>(av.begin(), av.end())) {
