@@ -1,6 +1,9 @@
 #include "abcore/abcore.h"
 #include "baseline/baseline.h"
 #include "baseline/tabcore_baseline.h"
+#include "config/config.h"
+#include "online/online.h"
+#include "utility/utility.h"
 
 using namespace std;
 
@@ -18,7 +21,12 @@ int main(int argc, char *argv[]) {
         cout << "loading graph: " << elapsed_seconds.count() << endl;
 
 //        index_baseline(g);
-        tabcore_baseline(g);
+//        tabcore_baseline(g);
+
+        auto node_u = vector<bool>();
+        auto node_v = vector<bool>();
+
+        online_peeling(1,1,0,20, g, node_u, node_v);
 
 //        if (input.cmdOptionExists("-query")) {
 //

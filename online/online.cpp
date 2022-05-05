@@ -5,7 +5,6 @@
 #include "online.h"
 
 
-
 auto compute_a_b_core_nodes(vector<vector<vid_t>>& nu, vector<vector<vid_t>>& nv,
                             int alpha, int beta,
                             vector<bool>& nodes_u,
@@ -141,7 +140,6 @@ auto online_peeling (const int& alpha, const int& beta, const int& ts, const int
     auto end = chrono::system_clock::now();
     chrono::duration<double> elapsed_seconds = end - start;
 
-    cout << "Online algorithm for peeling abcore from ts: " << ts << " to te: " << te
-         << " cost(s): " << elapsed_seconds.count() << endl;
+    cout << "online query: " << elapsed_seconds.count() << endl;
 #endif
 }

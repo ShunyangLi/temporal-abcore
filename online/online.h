@@ -6,6 +6,7 @@
 #define TEMPORAL_ABCORE_ONLINE_H
 
 #include "../bigraph/bigraph.h"
+#include "../config/config.h"
 
 auto online_peeling (const int& alpha, const int& beta, const int& ts, const int& te,
                      BiGraph& g, vector<bool>& node_u, vector<bool>& node_v) -> void;
