@@ -142,4 +142,18 @@ auto online_peeling (const int& alpha, const int& beta, const int& ts, const int
 
     cout << "online query: " << elapsed_seconds.count() << endl;
 #endif
+
+#ifdef PRINTABCORE
+    cout << "upper vertices: " << endl;
+    for (auto u = 0; u < nodes_u.size(); u ++) {
+        if (nodes_u[u]) cout << " " << u;
+    }
+    cout << endl;
+
+    cout << "lower vertices: " << endl;
+    for (auto v = 0; v < nodes_v.size(); v ++) {
+        if (nodes_v[v]) cout << " " << v;
+    }
+    cout << endl;
+#endif
 }

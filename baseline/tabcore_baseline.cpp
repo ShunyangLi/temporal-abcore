@@ -313,8 +313,8 @@ auto tabcore_baseline(BiGraph& g) -> void {
  * Given a ts, te and alpha beta value, we aim to find the (a,b)-core vertices
  * in G[ts,te]
  */
-auto query(const int& ts, const int& te, const int& alpha, const int& beta, vector<bool>& node_u,
-           vector<bool>& node_v, BiGraph& g) -> void {
+auto query(const int& alpha, const int& beta, const int& ts, const int& te, BiGraph& g, vector<bool>& node_u,
+           vector<bool>& node_v) -> void {
 #ifdef TIME
     auto start = chrono::system_clock::now();
 #endif
@@ -342,5 +342,19 @@ auto query(const int& ts, const int& te, const int& alpha, const int& beta, vect
     auto end = chrono::system_clock::now();
     chrono::duration<double> elapsed_seconds = end - start;
     cout << "query for tabcore: " << elapsed_seconds.count() << endl;
+#endif
+
+#ifdef PRINTABCORE
+    cout << "upper vertices: " << endl;
+    for (auto u = 0; u < node_u.size(); u ++) {
+        if (node_u[u]) cout << " " << u;
+    }
+    cout << endl;
+
+    cout << "lower vertices: " << endl;
+    for (auto v = 0; v < node_v.size(); v ++) {
+        if (node_v[v]) cout << " " << v;
+    }
+    cout << endl;
 #endif
 }

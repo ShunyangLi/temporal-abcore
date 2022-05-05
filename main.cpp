@@ -20,13 +20,19 @@ int main(int argc, char *argv[]) {
         chrono::duration<double> elapsed_seconds = end - start;
         cout << "loading graph: " << elapsed_seconds.count() << endl;
 
-//        index_baseline(g);
-//        tabcore_baseline(g);
-
         auto node_u = vector<bool>();
         auto node_v = vector<bool>();
 
-        online_peeling(1,1,0,20, g, node_u, node_v);
+//        index_baseline(g);
+//        baseline_query(1,1,0,20, g, node_u, node_v);
+
+//        tabcore_baseline(g);
+//        query(1,1,0,20, g, node_u, node_v);
+
+
+        online_peeling(2,1,0,69, g, node_u, node_v);
+
+
 
 //        if (input.cmdOptionExists("-query")) {
 //

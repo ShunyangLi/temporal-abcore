@@ -332,8 +332,8 @@ auto index_baseline(BiGraph& g) -> void  {
 
 }
 
-auto baseline_query(const int& ts, const int& te, const int& alpha, const int& beta, vector<bool>& node_u,
-           vector<bool>& node_v, BiGraph& g) -> void {
+auto baseline_query(const int& alpha, const int& beta, const int& ts, const int& te, BiGraph& g, vector<bool>& node_u,
+                    vector<bool>& node_v) -> void {
 
 #ifdef TIME
     auto start = chrono::system_clock::now();
@@ -384,4 +384,17 @@ auto baseline_query(const int& ts, const int& te, const int& alpha, const int& b
     cout << "query for baseline: " << elapsed_seconds.count() << endl;
 #endif
 
+#ifdef PRINTABCORE
+    cout << "upper vertices: " << endl;
+    for (auto u = 0; u < node_u.size(); u ++) {
+        if (node_u[u]) cout << " " << u;
+    }
+    cout << endl;
+
+    cout << "lower vertices: " << endl;
+    for (auto v = 0; v < node_v.size(); v ++) {
+        if (node_v[v]) cout << " " << v;
+    }
+    cout << endl;
+#endif
 }
