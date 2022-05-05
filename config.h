@@ -12,6 +12,7 @@
 
 #define DELETION 0
 #define END -1
+#define TIME
 
 
 #endif //TEMPORAL_ABCORE_CONFIG_H

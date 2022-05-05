@@ -434,7 +434,9 @@ auto index_baseline(BiGraph& g) -> void  {
     // init the core neighbor number
     // compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
     // compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
+#ifdef TIME
     auto start = chrono::system_clock::now();
+#endif
 
     for (auto ts = 0; ts < g.tmax; ++ ts) {
         // then working here
@@ -452,10 +454,12 @@ auto index_baseline(BiGraph& g) -> void  {
 
     }
 
+#ifdef TIME
     cout << "finished baseline" << endl;
     auto end = chrono::system_clock::now();
     chrono::duration<double> elapsed_seconds = end - start;
     cout << "construction: " << elapsed_seconds.count() << endl;
+#endif
 
 #ifdef INDEX_SIZE
     vertex_index_size(g);
@@ -463,3 +467,56 @@ auto index_baseline(BiGraph& g) -> void  {
 
 }
 
+auto baseline_query(const int& ts, const int& te, const int& alpha, const int& beta, vector<bool>& node_u,
+           vector<bool>& node_v, BiGraph& g) -> void {
+
+#ifdef TIME
+    auto start = chrono::system_clock::now();
+#endif
+
+    node_u = vector<bool>(g.num_v1, false);
+    node_v = vector<bool>(g.num_v2, false);
+
+    for (auto u = 0; u < g.u_index.size(); u ++) {
+        if (g.u_index[u].size() < alpha) continue;
+        if (g.u_index[u][alpha].size() < beta) continue;
+        if (g.u_index[u][alpha][beta].empty()) continue;
+
+        for (auto const& ti : g.u_index[u][alpha][beta]) {
+            if (ti.first <= ts) {
+                if (ti.second == END) {
+                    node_u[u] = false;
+                    break;
+                }
+                if (ti.second <= te) node_u[u] = true;
+            } else {
+                break;
+            }
+        }
+    }
+
+    for (auto v = 0; v < g.v_index.size(); v++) {
+        if (g.v_index[v].size() < beta) continue;
+        if (g.v_index[v][beta].size() < alpha) continue;
+        if (g.v_index[v][beta][alpha].empty()) continue;
+
+        for (auto const& ti : g.v_index[v][beta][alpha]) {
+            if (ti.first <= ts) {
+                if (ti.second == END) {
+                    node_v[v] = false;
+                    break;
+                }
+                if (ti.second <= te) node_v[v] = true;
+            } else {
+                break;
+            }
+        }
+    }
+
+#ifdef TIME
+    auto end = chrono::system_clock::now();
+    chrono::duration<double> elapsed_seconds = end - start;
+    cout << "query for baseline: " << elapsed_seconds.count() << endl;
+#endif
+
+}

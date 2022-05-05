@@ -315,5 +315,32 @@ auto tabcore_baseline(BiGraph& g) -> void {
  */
 auto query(const int& ts, const int& te, const int& alpha, const int& beta, vector<bool>& node_u,
            vector<bool>& node_v, BiGraph& g) -> void {
+#ifdef TIME
+    auto start = chrono::system_clock::now();
+#endif
+    node_u = vector<bool>(g.num_v1, false);
+    node_v = vector<bool>(g.num_v2, false);
 
+    if (alpha > g.tbcore_uindex.size()) return;
+    if (beta > g.tbcore_uindex[alpha].size()) return;
+    if (ts > g.tbcore_uindex[alpha][beta].size()) return;
+    if (g.tbcore_uindex[alpha][beta][ts].empty()) return;
+
+    auto block = g.tbcore_uindex[alpha][beta][ts].front();
+    while (block != nullptr && block->te <= te) {
+        for (auto const& u: block->nodeset) node_u[u] = true;
+        block = block->child;
+    }
+
+    block = g.tbcore_vindex[beta][alpha][ts].front();
+    while (block != nullptr && block->te <= te) {
+        for (auto const& v: block->nodeset) node_v[v] = true;
+        block = block->child;
+    }
+
+#ifdef TIME
+    auto end = chrono::system_clock::now();
+    chrono::duration<double> elapsed_seconds = end - start;
+    cout << "query for tabcore: " << elapsed_seconds.count() << endl;
+#endif
 }
