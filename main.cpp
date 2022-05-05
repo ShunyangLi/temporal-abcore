@@ -1,6 +1,6 @@
-#include "abcore.h"
-#include "baseline.h"
-#include "tabcore_baseline.h"
+#include "abcore/abcore.h"
+#include "baseline/baseline.h"
+#include "baseline/tabcore_baseline.h"
 
 using namespace std;
 

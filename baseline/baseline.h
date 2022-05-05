@@ -5,7 +5,7 @@
 #ifndef TEMPORAL_ABCORE_BASELINE_H
 #define TEMPORAL_ABCORE_BASELINE_H
 
-#include "bigraph.h"
+#include "../bigraph/bigraph.h"
 
 auto index_baseline(BiGraph& g) -> void ;
 

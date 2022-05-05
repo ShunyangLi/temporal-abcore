@@ -3,8 +3,8 @@
 //
 
 #include "tabcore_baseline.h"
-#include "abcore.h"
-#include "config.h"
+#include "../abcore/abcore.h"
+#include "../config/config.h"
 
 /**
  * compute the vertex storage index size

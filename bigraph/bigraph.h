@@ -4,7 +4,7 @@
 #define __BIGRAPH_H
 
 
-#include "utility.h"
+#include "../utility/utility.h"
 #include <set>
 
 

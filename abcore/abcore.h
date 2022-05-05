@@ -1,7 +1,7 @@
 #pragma once
 #ifndef ABCORE_H
 #define ABCORE_H
-#include "bigraph.h"
+#include "../bigraph/bigraph.h"
 
 using namespace std;
 
