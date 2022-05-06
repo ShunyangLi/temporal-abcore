@@ -14,12 +14,12 @@ auto tab_vertex_index_size(BiGraph& g) -> void {
     double idx_size = 0;
 
     // compute the index size for upper index and lower index
-    idx_size += sizeof(int) * g.tbcore_uindex.size();
+    idx_size += double (sizeof(int) * g.tbcore_uindex.size());
 
     for (auto alpha = 1; alpha < g.tbcore_uindex.size(); alpha ++) {
-        idx_size += sizeof(int) * g.tbcore_uindex[alpha].size() - 1;
+        idx_size += double (sizeof(int) * g.tbcore_uindex[alpha].size() - 1);
         for (auto beta = 1; beta < g.tbcore_uindex[alpha].size(); beta ++) {
-            idx_size += sizeof(int) * g.tbcore_uindex[alpha][beta].size() - 1;
+            idx_size += double (sizeof(int) * g.tbcore_uindex[alpha][beta].size() - 1);
 
             for (auto ts = 0; ts < g.tbcore_uindex[alpha][beta].size(); ts ++) {
                 if (g.tbcore_uindex[alpha][beta][ts].empty()) {
@@ -32,18 +32,18 @@ auto tab_vertex_index_size(BiGraph& g) -> void {
                 while (block != nullptr) {
                     idx_size += sizeof(int);
                     idx_size += sizeof(vertex_block) * 2;
-                    idx_size += block->nodeset.size() * sizeof(int );
+                    idx_size += double (block->nodeset.size() * sizeof(int ));
                     block = block->child;
                 }
             }
         }
     }
 
-    idx_size += sizeof(int) * g.tbcore_vindex.size();
+    idx_size += double (sizeof(int) * g.tbcore_vindex.size());
     for (auto beta = 1; beta < g.tbcore_vindex.size(); beta ++) {
-        idx_size += sizeof(int) * g.tbcore_vindex[beta].size() - 1;
+        idx_size += double (sizeof(int) * g.tbcore_vindex[beta].size() - 1);
         for (auto alpha = 1; alpha < g.tbcore_vindex[beta].size(); alpha ++) {
-            idx_size += sizeof(int) * g.tbcore_vindex[beta][alpha].size();
+            idx_size += double (sizeof(int) * g.tbcore_vindex[beta][alpha].size());
 
             for (auto ts = 0; ts < g.tbcore_vindex[beta][alpha].size(); ts ++) {
                 if (g.tbcore_vindex[beta][alpha][ts].empty()) {
@@ -54,18 +54,18 @@ auto tab_vertex_index_size(BiGraph& g) -> void {
                 while (block != nullptr) {
                     idx_size += sizeof(int);
                     idx_size += sizeof(vertex_block) * 2;
-                    idx_size += block->nodeset.size() * sizeof(int );
+                    idx_size += double (block->nodeset.size() * sizeof(int ));
                     block = block->child;
                 }
             }
         }
     }
 
-    double graph_size = g.num_edges * 3 * sizeof(int) ;
+    auto graph_size = double (g.num_edges * 3 * sizeof(int));
 
 #ifdef MBS
-    cout << "Graph size: " << graph_size / 1024 / 1024 << " MB." << endl;
-    cout << "Index size: " << double (idx_size / 1024 / 1024) << " MB." << endl;
+    cout << "Graph size: " << graph_size / 1000000 << " MB." << endl;
+    cout << "Index size: " << double (idx_size / 1000000) << " MB." << endl;
 #else
     cout << "Graph size: " << graph_size << " bytes." << endl;
     cout << "Index size: " << idx_size  << " bytes." << endl;
@@ -79,7 +79,7 @@ auto tab_compute_core_neighbor(const vid_t& ts, vector<unordered_map<int, int>>&
 
     for (auto u = 0; u < num; u ++) {
         cn[u].clear();
-        for (int index = nu[u].size() - 1; index >= 0; index --) {
+        for (int index = int(nu[u].size() - 1); index >= 0; index --) {
             auto v = nu[u][index].first;
             auto t = nu[u][index].second;
 
@@ -109,10 +109,9 @@ auto tab_update_index(vector<vector<vector<vector<vertex_block*>>>>& index,
         return;
     }
 
-
-    for (int i = index[alpha][beta][ts].size() - 1; i >=0 ; --i) {
+    for (int i = int(index[alpha][beta][ts].size() - 1); i >=0 ; --i) {
         if (index[alpha][beta][ts][i]->te == te) {
-            index[alpha][beta][ts][i]->nodeset.push_back(te);
+            index[alpha][beta][ts][i]->nodeset.push_back(u);
             return;
         }
     }
@@ -171,11 +170,14 @@ auto tab_back_del_edges(BiGraph& g, BiGraph& tg,
             auto au = vector<vid_t>();
             auto av = vector<vid_t>();
 
-
             update_bicore_index(tg, tu, tv, DELETION, au, av);
 
+            auto vu = vector<bool>(g.num_v1, false);
+            auto vv = vector<bool>(g.num_v2, false);
             // then we just check whether the the core number is changed
-            for (auto const & u : set<vid_t>(au.begin(), au.end())) {
+            for (auto const & u : au)  {
+                if (vu[u]) continue;
+                else vu[u] = true;
 
                 for (auto alpha = u_alpha_offset[u].size() - 1; alpha >= 1; --alpha) {
                     auto beta = u_alpha_offset[u][alpha];
@@ -193,17 +195,20 @@ auto tab_back_del_edges(BiGraph& g, BiGraph& tg,
                 }
             }
 
-            for (auto const & v: set<vid_t>(av.begin(), av.end())) {
+            for (auto const & v: av) {
+                if (vv[v]) continue;
+                else vv[v] = true;
+
                 // the alpha value of u becomes smaller
                 if (v_beta_offset[v].size() > tg.right_index[v].size()) {
                     // then record it.
                     for (auto beta =  v_beta_offset[v].size() - 1; beta > tg.right_index[v].size() - 1; --beta) {
-                        auto alpha = v_beta_offset[v][beta];
-                        tab_update_index(g.tbcore_vindex, ts, _te, v, beta, alpha);
+                        for (auto alpha = 1; alpha <= v_beta_offset[v][beta]; alpha ++)
+                            tab_update_index(g.tbcore_vindex, ts, _te, v, beta, alpha);
                     }
                 }
 
-                for (int beta  = tg.right_index[v].size() - 1; beta >= 1; beta --) {
+                for (auto beta  = int(tg.right_index[v].size() - 1); beta >= 1; beta --) {
                     if (tg.right_index[v][beta] != v_beta_offset[v][beta]) {
                         auto alpha = v_beta_offset[v][beta];
                         tab_update_index(g.tbcore_vindex, ts, _te, v, beta, alpha);
