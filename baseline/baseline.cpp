@@ -127,11 +127,17 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
             auto au = vector<vid_t>();
             auto av = vector<vid_t>();
 
-
             update_bicore_index(tg, tu, tv, DELETION, au, av);
 
+
             // then we just check whether the the core number is changed
-            for (auto const & u : set<vid_t>(au.begin(), au.end())) {
+            auto vu = vector<bool>(g.num_v1, false);
+            auto vv = vector<bool>(g.num_v2, false);
+
+            for (auto const & u : au) {
+                if (vu[u]) continue;
+                else vu[u] = true;
+
                 for (auto alpha = u_alpha_offset[u].size() - 1; alpha >= 1; --alpha) {
                     auto beta = u_alpha_offset[u][alpha];
 
@@ -146,13 +152,18 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
                 }
             }
 
-            for (auto const & v: set<vid_t>(av.begin(), av.end())) {
+            for (auto const & v: av) {
+
+                if (vv[v]) continue;
+                else vv[v] = true;
+
+
                 // the alpha value of u becomes smaller
                 if (v_beta_offset[v].size() > tg.right_index[v].size()) {
                     // then record it.
                     for (auto beta =  v_beta_offset[v].size() - 1; beta > tg.right_index[v].size() - 1; --beta) {
-                        auto alpha = v_beta_offset[v][beta];
-                        update_index(g.v_index, ts, _te, v, beta, alpha, g);
+                        for (auto alpha = 1; alpha <= v_beta_offset[v][beta]; alpha ++)
+                            update_index(g.v_index, ts, _te, v, beta, alpha, g);
                     }
                 }
 
@@ -343,11 +354,13 @@ auto baseline_query(const int& alpha, const int& beta, const int& ts, const int&
     node_v = vector<bool>(g.num_v2, false);
 
     for (auto u = 0; u < g.u_index.size(); u ++) {
-        if (g.u_index[u].size() < alpha) continue;
-        if (g.u_index[u][alpha].size() < beta) continue;
+        if (g.u_index[u].size() - 1 < alpha) continue;
+        if (g.u_index[u][alpha].empty()) continue;
+        if (g.u_index[u][alpha].size() - 1 < beta) continue;
         if (g.u_index[u][alpha][beta].empty()) continue;
 
         for (auto const& ti : g.u_index[u][alpha][beta]) {
+
             if (ti.first <= ts) {
                 if (ti.second == END) {
                     node_u[u] = false;
@@ -361,8 +374,9 @@ auto baseline_query(const int& alpha, const int& beta, const int& ts, const int&
     }
 
     for (auto v = 0; v < g.v_index.size(); v++) {
-        if (g.v_index[v].size() < beta) continue;
-        if (g.v_index[v][beta].size() < alpha) continue;
+        if (g.v_index[v].size() - 1 < beta) continue;
+        if (g.v_index[v][beta].empty()) continue;
+        if (g.v_index[v][beta].size() - 1 < alpha) continue;
         if (g.v_index[v][beta][alpha].empty()) continue;
 
         for (auto const& ti : g.v_index[v][beta][alpha]) {
