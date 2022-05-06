@@ -233,7 +233,13 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
         update_bicore_index(g, tu, tv, DELETION, au, av);
 
         // then we just check whether the the core number is changed
+        auto vu = vector<bool>(g.num_v1, false);
+        auto vv = vector<bool>(g.num_v2, false);
         for (auto const& u : au) {
+
+            if (vu[u]) continue;
+            else vu[u] = true;
+
             // the alpha value of u becomes smaller
             if (u_alpha_offset[u].size() > g.left_index[u].size()) {
                 // then record it.
@@ -254,14 +260,17 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
         }
 
         for (auto const& v : av) {
+            if (vv[v]) continue;
+            else vv[v] = true;
+
             // the alpha value of u becomes smaller
             if (v_beta_offset[v].size() > g.right_index[v].size()) {
                 // then record it.
                 for (auto beta =  v_beta_offset[v].size() - 1; beta > g.right_index[v].size() - 1; --beta) {
-                    auto alpha = v_beta_offset[v][beta];
-                    if (!g.v_index[v][beta][alpha].empty() && g.v_index[v][beta][alpha].back().second == END) continue;
-                    g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[ts + 1], END));
-
+                    for (auto alpha = 1; alpha <= v_beta_offset[v][beta]; alpha ++) {
+                        if (!g.v_index[v][beta][alpha].empty() && g.v_index[v][beta][alpha].back().second == END) continue;
+                        g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+                    }
                 }
             }
 
