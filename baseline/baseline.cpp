@@ -16,31 +16,31 @@ auto vertex_index_size(BiGraph& g) -> void {
     double idx_size = 0;
 
     // add the vertices size
-    idx_size += sizeof(int) * g.num_v1;
+    idx_size += double (sizeof(int) * g.num_v1);
 
     // then for each vertex compute the real usage
     for (auto u = 0; u < g.num_v1; u ++) {
         for (auto alpha = 1; alpha < g.u_index[u].size(); alpha ++) {
             for (auto beta = 1; beta < g.u_index[u][alpha].size(); beta ++) {
-                idx_size += g.u_index[u][alpha][beta].size() * 2 * sizeof(int);
+                idx_size += double (g.u_index[u][alpha][beta].size() * 2 * sizeof(int));
             }
         }
     }
 
-    idx_size += sizeof(int) * g.num_v2;
+    idx_size += double (sizeof(int) * g.num_v2);
     for (auto v = 0; v < g.num_v2; v ++) {
         for (auto beta = 1; beta < g.v_index[v].size(); beta ++ ) {
             for (auto alpha = 1; alpha < g.v_index[v][beta].size(); alpha ++) {
-                idx_size += g.v_index[v][beta][alpha].size() * 2 * sizeof(int );
+                idx_size += double(g.v_index[v][beta][alpha].size() * 2 * sizeof(int ));
             }
         }
     }
 
-    double graph_size = g.num_edges * 3 * sizeof(int) ;
+    auto graph_size = double(g.num_edges * 3 * sizeof(int)) ;
 
 #ifdef MBS
-    cout << "Graph size: " << graph_size / 1024 / 1024 << " MB." << endl;
-    cout << "Index size: " << double (idx_size / 1024 / 1024) << " MB." << endl;
+    cout << "Graph size: " << graph_size / 1000000 << " MB." << endl;
+    cout << "Index size: " << double (idx_size / 1000000) << " MB." << endl;
 #else
     cout << "Graph size: " << graph_size << " bytes." << endl;
     cout << "Index size: " << idx_size  << " bytes." << endl;
@@ -55,7 +55,7 @@ auto compute_core_neighbor(const vid_t& ts, vector<unordered_map<int, int>>& cn,
 
     for (auto u = 0; u < num; u ++) {
         cn[u].clear();
-        for (int index = nu[u].size() - 1; index >= 0; index --) {
+        for (auto index = int(nu[u].size() - 1); index >= 0; index --) {
             auto v = nu[u][index].first;
             auto t = nu[u][index].second;
 
@@ -138,16 +138,18 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
                 if (vu[u]) continue;
                 else vu[u] = true;
 
-                for (auto alpha = u_alpha_offset[u].size() - 1; alpha >= 1; --alpha) {
-                    auto beta = u_alpha_offset[u][alpha];
+                if (u_alpha_offset[u].size() > tg.left_index[u].size()) {
+                    // then record it.
+                    for (auto alpha = int(u_alpha_offset[u].size() - 1); alpha > int(tg.left_index[u].size() - 1); --alpha) {
+                        for (auto beta = 1; beta <= u_alpha_offset[u][alpha]; beta ++)
+                            update_index(g.u_index, ts, _te, u, alpha, beta, g);
+                    }
+                }
 
-                    for (; beta >= 1; beta --) {
-                        if (alpha > tg.left_index[u].size() - 1) update_index(g.u_index, ts, _te, u, alpha, beta, g);
-                        else {
-                            if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha])
-                                update_index(g.u_index, ts, _te, u, alpha, beta, g);
-                            else break;
-                        }
+                for (auto alpha  = int(tg.left_index[u].size() - 1); alpha >= 1; --alpha) {
+                    if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
+                        for (auto beta = int(u_alpha_offset[u][alpha]); beta >= 1; -- beta)
+                            update_index(g.u_index, ts, _te, u, alpha, beta, g);
                     }
                 }
             }
@@ -167,7 +169,7 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
                     }
                 }
 
-                for (int beta  = tg.right_index[v].size() - 1; beta >= 1; beta --) {
+                for (auto beta  = int(tg.right_index[v].size() - 1); beta >= 1; beta --) {
                     if (tg.right_index[v][beta] != v_beta_offset[v][beta]) {
                         auto alpha = v_beta_offset[v][beta];
                         update_index(g.v_index, ts, _te, v, beta, alpha, g);
@@ -274,7 +276,7 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
                 }
             }
 
-            for (int beta  = g.right_index[v].size() - 1; beta >= 1; beta --) {
+            for (auto beta  = int(g.right_index[v].size() - 1); beta >= 1; beta --) {
                 if (g.right_index[v][beta] != v_beta_offset[v][beta]) {
                     auto alpha = v_beta_offset[v][beta];
                     if (!g.v_index[v][beta][alpha].empty() && g.v_index[v][beta][alpha].back().second == END) continue;

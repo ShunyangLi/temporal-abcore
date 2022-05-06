@@ -179,19 +179,19 @@ auto tab_back_del_edges(BiGraph& g, BiGraph& tg,
                 if (vu[u]) continue;
                 else vu[u] = true;
 
-                for (auto alpha = u_alpha_offset[u].size() - 1; alpha >= 1; --alpha) {
-                    auto beta = u_alpha_offset[u][alpha];
-
-                    for (; beta >= 1; beta --) {
-                        if (alpha > tg.left_index[u].size() - 1) tab_update_index(g.tbcore_uindex, ts, _te, u, alpha, beta);
-                        else {
-                            if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha])
-                                tab_update_index(g.tbcore_uindex, ts, _te, u, alpha, beta);
-                            else break;
-                        }
+                if (u_alpha_offset[u].size() > tg.left_index[u].size()) {
+                    // then record it.
+                    for (auto alpha =  u_alpha_offset[u].size() - 1; alpha > tg.left_index[u].size() - 1; --alpha) {
+                        for (auto beta = 1; beta <= u_alpha_offset[u][alpha]; beta ++)
+                            tab_update_index(g.tbcore_uindex, ts, _te, u, alpha, beta);
                     }
+                }
 
-
+                for (auto alpha  = int(tg.left_index[u].size() - 1); alpha >= 1; --alpha) {
+                    if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
+                        for (auto beta = int(u_alpha_offset[u][alpha]); beta >= 1; -- beta)
+                            tab_update_index(g.tbcore_uindex, ts, _te, u, alpha, beta);
+                    }
                 }
             }
 
