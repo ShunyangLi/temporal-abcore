@@ -137,8 +137,10 @@ void BiGraph::addEdge(vid_t u, vid_t v) {
 
 void BiGraph::addEdgeT(vid_t u, vid_t v, vid_t t) {
     edges.emplace_back(std::make_pair(u,v));
+
     if (time_new_to_old.empty()) {
         time_new_to_old.push_back(t);
+        edges_idx.emplace_back(edges.size() - 1);
     } else {
         if (t != time_new_to_old.back()) {
             time_new_to_old.push_back(t);
@@ -149,6 +151,8 @@ void BiGraph::addEdgeT(vid_t u, vid_t v, vid_t t) {
     int format_t = int(time_new_to_old.size() - 1);
     tnu[u].emplace_back(make_pair(v, format_t));
     tnv[v].emplace_back(make_pair(u, format_t));
+
+//    edges_idx.emplace_back(edges.size());
 }
 
 // not change max_degree
