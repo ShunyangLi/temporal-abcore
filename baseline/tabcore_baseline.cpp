@@ -140,8 +140,8 @@ auto tab_back_del_edges(BiGraph& g, BiGraph& tg,
 
         // because there are may one more than one edge that between ts and te
         for (auto index = tg.edges_idx[_te]; index < tg.edges_idx[_te + 1]; ++index) {
-            auto u = tg.edges[index - 1].first;
-            auto v = tg.edges[index - 1].second;
+            auto u = tg.edges[index].first;
+            auto v = tg.edges[index].second;
 
             // then we process u and v
             -- tg.ucn[u][v];
