@@ -91,7 +91,7 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
     auto q = queue<pair<vid_t, vid_t>>();
 
     // to do the loop delete edges
-    for (auto _te = tmax; _te >= ts; _te --) {
+    for (auto _te = tmax; _te > ts; _te --) {
 
         // because there are may one more than one edge that between ts and te
         for (auto index = tg.edges_idx[_te]; index < tg.edges_idx[_te + 1]; ++index) {
@@ -243,7 +243,6 @@ auto advance_del_edge(BiGraph& g, const int& _te) -> void {
 
             for (auto alpha  = g.left_index[u].size() - 1; alpha >= 1; --alpha) {
                 if (g.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
-//                    auto beta = u_alpha_offset[u][alpha];
                     for (auto beta = int(u_alpha_offset[u][alpha]); beta > g.left_index[u][alpha]; -- beta) {
                         if (!g.u_index[u][alpha][beta].empty() && g.u_index[u][alpha][beta].back().second == END) continue;
                         g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[_te + 1], END));

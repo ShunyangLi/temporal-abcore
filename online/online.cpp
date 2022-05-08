@@ -123,7 +123,7 @@ auto online_peeling (const int& alpha, const int& beta, const int& ts, const int
         }
     }
 
-    cout << "u: " << nu.size() << " v: " << nv.size() << endl;
+//    cout << "u: " << nu.size() << " v: " << nv.size() << endl;
     auto nodes_u = vector<bool>(nu.size());
     auto nodes_v = vector<bool>(nv.size());
     compute_a_b_core_nodes(nu, nv, alpha, beta, nodes_u, nodes_v);

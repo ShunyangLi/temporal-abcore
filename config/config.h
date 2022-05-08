@@ -14,7 +14,7 @@
 #define END -1
 #define TIME
 
-#define PRINTABCORE
+//#define PRINTABCORE
 
 
 #endif //TEMPORAL_ABCORE_CONFIG_H

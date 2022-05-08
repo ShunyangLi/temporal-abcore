@@ -414,6 +414,7 @@ auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te,
 #ifdef TIME
     auto start = chrono::system_clock::now();
 #endif
+
     node_u = vector<bool>(g.num_v1, false);
     node_v = vector<bool>(g.num_v2, false);
 
@@ -422,59 +423,43 @@ auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te,
     if (ts > g.tbcore_uindex[alpha][beta].size()) return;
 
     // select the last tts that tts <= ts
-    auto tts = 0;
-    for (; tts < g.tbcore_uindex[alpha][beta].size(); tts += 3) {
-        if (tts > ts) {
-           tts -= 3;
-            break;
-        }
+    auto tts = ts;
+    if (ts % 3 != 0) {
+        tts = int(ts / 3) * 3 + 3;
     }
 
-    auto vertex_u = vector<int>();
-    auto vertex_v = vector<int>();
-
-    auto tnode_u = vector<bool>(g.num_v1, false);
-    auto tnode_v = vector<bool>(g.num_v2, false);
     auto block = g.tbcore_uindex[alpha][beta][tts].front();
     while (block != nullptr && block->te <= te) {
         for (auto const& u: block->nodeset) {
-            tnode_u[u] = true;
-            vertex_u.push_back(u);
+            node_u[u] = true;
         }
         block = block->child;
     }
 
     block = g.tbcore_vindex[beta][alpha][tts].front();
     while (block != nullptr && block->te <= te) {
-        for (auto const& v: block->nodeset) tnode_v[v] = true;
+        for (auto const& v: block->nodeset) node_v[v] = true;
         block = block->child;
     }
 
-    // then we try to find the subgraph
-    auto uDegree = vector<int>(g.num_v1, 0);
-    auto vDegree = vector<int>(g.num_v2, 0);
+    if (ts != tts) {
+        // we add the edge to check whether work.
+        auto uDegree = map<int,int>();
+        auto vDegree = map<int,int>();
 
-    for (auto const& u : vertex_u) {
-        for (auto const& e : g.tnu[u]) {
-            auto v = e.first;
-            auto t = e.second;
-            if (!tnode_v[v]) continue;
-            // if e does not belong to the subgraph, then remove it.
-            if (t >= ts && t <= te) {
-                uDegree[u] += 1;
-                vDegree[v] += 1;
+        for (auto index = g.edges_idx[ts]; index < g.edges_idx[tts]; index++) {
+            auto u = g.edges[index].first;
+            auto v = g.edges[index].second;
 
-                vertex_v.push_back(v);
+            if (!node_u[u]) {
+                uDegree[u] ++;
+                if (uDegree[u] >= alpha) node_u[u]= true;
+            }
+            if (!node_v[v]) {
+                vDegree[v] ++;
+                if (vDegree[v] >= beta) node_v[v] = true;
             }
         }
-    }
-
-    for (auto const& u : vertex_u) {
-        if (uDegree[u] >= alpha) node_u[u] = true;
-    }
-
-    for (auto const& v : vertex_v) {
-        if (vDegree[v] >= beta) node_v[v] = true;
     }
 
 

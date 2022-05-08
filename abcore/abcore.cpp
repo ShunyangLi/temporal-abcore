@@ -471,7 +471,7 @@ double update_bicore_index(BiGraph& g, vid_t u, vid_t v, bool addition,
             }
         }
         else {
-//            cout << "illegal deletion 2" << endl;
+            cout << "illegal deletion 2" << endl;
             return 0;
         }
     }
