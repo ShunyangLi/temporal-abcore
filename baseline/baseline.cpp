@@ -148,7 +148,7 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
 
                 for (auto alpha  = int(tg.left_index[u].size() - 1); alpha >= 1; --alpha) {
                     if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
-                        for (auto beta = int(u_alpha_offset[u][alpha]); beta >= 1; -- beta)
+                        for (auto beta = int(u_alpha_offset[u][alpha]); beta > tg.left_index[u][alpha]; -- beta)
                             update_index(g.u_index, ts, _te, u, alpha, beta, g);
                     }
                 }
@@ -171,8 +171,8 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
 
                 for (auto beta  = int(tg.right_index[v].size() - 1); beta >= 1; beta --) {
                     if (tg.right_index[v][beta] != v_beta_offset[v][beta]) {
-                        auto alpha = v_beta_offset[v][beta];
-                        update_index(g.v_index, ts, _te, v, beta, alpha, g);
+                        for (auto alpha = int(v_beta_offset[v][beta]); alpha > tg.right_index[v][beta]; alpha --)
+                            update_index(g.v_index, ts, _te, v, beta, alpha, g);
                     }
                 }
             }

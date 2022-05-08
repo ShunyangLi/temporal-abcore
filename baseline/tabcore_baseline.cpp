@@ -176,6 +176,7 @@ auto tab_back_del_edges(BiGraph& g, BiGraph& tg,
             auto vv = vector<bool>(g.num_v2, false);
             // then we just check whether the the core number is changed
             for (auto const & u : au)  {
+
                 if (vu[u]) continue;
                 else vu[u] = true;
 
@@ -189,7 +190,7 @@ auto tab_back_del_edges(BiGraph& g, BiGraph& tg,
 
                 for (auto alpha  = int(tg.left_index[u].size() - 1); alpha >= 1; --alpha) {
                     if (tg.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
-                        for (auto beta = int(u_alpha_offset[u][alpha]); beta >= 1; -- beta)
+                        for (auto beta = int(u_alpha_offset[u][alpha]); beta > int(tg.left_index[u][alpha]); beta --)
                             tab_update_index(g.tbcore_uindex, ts, _te, u, alpha, beta);
                     }
                 }
@@ -210,8 +211,8 @@ auto tab_back_del_edges(BiGraph& g, BiGraph& tg,
 
                 for (auto beta  = int(tg.right_index[v].size() - 1); beta >= 1; beta --) {
                     if (tg.right_index[v][beta] != v_beta_offset[v][beta]) {
-                        auto alpha = v_beta_offset[v][beta];
-                        tab_update_index(g.tbcore_vindex, ts, _te, v, beta, alpha);
+                        for (auto alpha = int(v_beta_offset[v][beta]); alpha > tg.right_index[v][beta]; alpha --)
+                            tab_update_index(g.tbcore_vindex, ts, _te, v, beta, alpha);
                     }
                 }
             }
@@ -416,7 +417,7 @@ auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te,
     auto start = chrono::system_clock::now();
 #endif
     node_u = vector<bool>(g.num_v1, false);
-//    node_v = vector<bool>(g.num_v2, false);
+    node_v = vector<bool>(g.num_v2, false);
 
     if (alpha > g.tbcore_uindex.size()) return;
     if (beta > g.tbcore_uindex[alpha].size()) return;
@@ -434,10 +435,21 @@ auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te,
 
     auto vertex_u = vector<int>();
     auto vertex_v = vector<int>();
-    auto block = g.tbcore_uindex[alpha][beta][tts].front();
 
+    auto tnode_u = vector<bool>(g.num_v1, false);
+    auto tnode_v = vector<bool>(g.num_v2, false);
+    auto block = g.tbcore_uindex[alpha][beta][tts].front();
     while (block != nullptr && block->te <= te) {
-        for (auto const& u: block->nodeset) vertex_u.push_back(u);
+        for (auto const& u: block->nodeset) {
+            tnode_u[u] = true;
+            vertex_u.push_back(u);
+        }
+        block = block->child;
+    }
+
+    block = g.tbcore_vindex[beta][alpha][ts].front();
+    while (block != nullptr && block->te <= te) {
+        for (auto const& v: block->nodeset) tnode_v[v] = true;
         block = block->child;
     }
 
@@ -449,6 +461,7 @@ auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te,
         for (auto const& e : g.tnu[u]) {
             auto v = e.first;
             auto t = e.second;
+            if (!tnode_v[v]) continue;
             // if e does not belong to the subgraph, then remove it.
             if (t >= ts && t <= te) {
                 uDegree[u] += 1;
