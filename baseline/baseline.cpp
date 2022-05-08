@@ -246,17 +246,23 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
             if (u_alpha_offset[u].size() > g.left_index[u].size()) {
                 // then record it.
                 for (auto alpha =  u_alpha_offset[u].size() - 1; alpha > g.left_index[u].size() - 1; --alpha) {
-                    auto beta = u_alpha_offset[u][alpha];
-                    if (!g.u_index[u][alpha][beta].empty() && g.u_index[u][alpha][beta].back().second == END) continue;
-                    g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+//                    auto beta = u_alpha_offset[u][alpha];
+                    for (auto beta = 1; beta <= u_alpha_offset[u][alpha]; beta ++) {
+                        if (!g.u_index[u][alpha][beta].empty() && g.u_index[u][alpha][beta].back().second == END) continue;
+                        g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+                    }
+
                 }
             }
 
             for (auto alpha  = g.left_index[u].size() - 1; alpha >= 1; --alpha) {
                 if (g.left_index[u][alpha] != u_alpha_offset[u][alpha]) {
-                    auto beta = u_alpha_offset[u][alpha];
-                    if (!g.u_index[u][alpha][beta].empty() && g.u_index[u][alpha][beta].back().second == END) continue;
-                    g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+//                    auto beta = u_alpha_offset[u][alpha];
+                    for (auto beta = int(u_alpha_offset[u][alpha]); beta > g.left_index[u][alpha]; -- beta) {
+                        if (!g.u_index[u][alpha][beta].empty() && g.u_index[u][alpha][beta].back().second == END) continue;
+                        g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+                    }
+
                 }
             }
         }
@@ -278,9 +284,12 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
 
             for (auto beta  = int(g.right_index[v].size() - 1); beta >= 1; beta --) {
                 if (g.right_index[v][beta] != v_beta_offset[v][beta]) {
-                    auto alpha = v_beta_offset[v][beta];
-                    if (!g.v_index[v][beta][alpha].empty() && g.v_index[v][beta][alpha].back().second == END) continue;
-                    g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+//                    auto alpha = v_beta_offset[v][beta];
+                    for (auto alpha = int(v_beta_offset[v][beta]); alpha > g.right_index[v][beta]; alpha --) {
+                        if (!g.v_index[v][beta][alpha].empty() && g.v_index[v][beta][alpha].back().second == END) continue;
+                        g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+                    }
+
                 }
             }
         }
@@ -293,6 +302,10 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
  * @param g graph object
  */
 auto index_baseline(BiGraph& g) -> void  {
+
+#ifdef TIME
+    auto start = chrono::system_clock::now();
+#endif
 
     cout << "starting abcore decomposition" << endl;
     // ab core decomposition
@@ -319,27 +332,27 @@ auto index_baseline(BiGraph& g) -> void  {
     }
 
     // init the core neighbor number
-    // compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
-    // compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
-#ifdef TIME
-    auto start = chrono::system_clock::now();
-#endif
+    // count the neighbor in the time interval ts to te
+    compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
+    compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
 
+    // then start peeling
     for (auto ts = 0; ts < g.tmax; ++ ts) {
         // then working here
         if (ts == g.tmax - 1) break;
+
+        auto tg = g;
+        back_del_edges(g, tg, ts, g.tmax - 1);
 
         // count the neighbor in the time interval ts to te
         compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);
         compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
 
-        auto tg = g;
-        back_del_edges(g, tg, ts, g.tmax - 1);
-
         // delete the visited edges
         if (ts < g.tmax) advance_del_edge(g, ts, ts);
-
+//        cout << "ts: " << ts << endl;
     }
+
 
 #ifdef TIME
     cout << "finished baseline" << endl;
@@ -371,7 +384,6 @@ auto baseline_query(const int& alpha, const int& beta, const int& ts, const int&
         if (g.u_index[u][alpha][beta].empty()) continue;
 
         for (auto const& ti : g.u_index[u][alpha][beta]) {
-
             if (ti.first <= ts) {
                 if (ti.second == END) {
                     node_u[u] = false;

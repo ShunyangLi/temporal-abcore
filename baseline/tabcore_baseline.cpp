@@ -223,7 +223,7 @@ auto tab_back_del_edges(BiGraph& g, BiGraph& tg,
 /**
  * delete the used edge from front to end
  */
-auto tab_advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
+auto tab_advance_del_edge(BiGraph& g, const int& _te) -> void {
 //    auto tg = g;
     auto q = queue<pair<vid_t, vid_t>>();
 
@@ -232,27 +232,20 @@ auto tab_advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
     else index = g.edges_idx[_te - 1];
 
     // because there are may one more than one edge that between ts and te
-    for (; index < g.edges_idx[_te + 1]; ++index) {
-        auto u = g.edges[index].first;
-        auto v = g.edges[index].second;
+    for (auto index = g.edges_idx[_te]; index < g.edges_idx[_te + 1]; ++index) {
+        auto u = g.edges[index - 1].first;
+        auto v = g.edges[index - 1].second;
 
-        for (auto it = g.tnu[u].begin(); it != g.tnu[u].end(); ++it) {
-            if (it->first == v && it->second == _te) {
-                g.tnu[u].erase(it);
-                break;
-            }
-        }
+        // then we process u and v
+        -- g.ucn[u][v];
+        -- g.vcn[v][u];
 
-        for (auto it = g.tnv[v].begin(); it != g.tnv[v].end(); ++it) {
-            if (it->first == u && it->second == _te) {
-                g.tnv[v].erase(it);
-                break;
-            }
-        }
+        if (g.ucn[u][v] == 0) g.ucn[u].erase(v);
+        if (g.vcn[v][u] == 0) g.vcn[v].erase(u);
 
         // when the neighbors of u is less then a, then update
         // it is one edge, so just detect only once
-        if (g.tnu[u].size() < g.left_index[u].size() - 1 || g.tnv[v].size() < g.right_index[v].size() - 1) {
+        if (g.ucn[u].size() < g.left_index[u].size() - 1 || g.vcn[v].size() < g.right_index[v].size() - 1) {
             q.push(std::make_pair(u, v));
         }
     }
@@ -279,26 +272,31 @@ auto tab_advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
  * @param g
  */
 auto tabcore_baseline(BiGraph& g) -> void {
+    auto start = chrono::system_clock::now();
+
     coreIndexKCore(g);
 
     g.tbcore_uindex.resize(2);
     g.tbcore_vindex.resize(2);
 
-    auto start = chrono::system_clock::now();
+    // count the neighbor in the time interval ts to te
+    tab_compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
+    tab_compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
+
     // then start peeling
     for (auto ts = 0; ts < g.tmax; ++ ts) {
         // then working here
         if (ts == g.tmax - 1) break;
 
+        auto tg = g;
+        tab_back_del_edges(g, tg, ts, g.tmax - 1);
+
         // count the neighbor in the time interval ts to te
         tab_compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);
         tab_compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
 
-        auto tg = g;
-        tab_back_del_edges(g, tg, ts, g.tmax - 1);
-
         // delete the visited edges
-        if (ts < g.tmax) tab_advance_del_edge(g, ts, ts);
+        if (ts < g.tmax) tab_advance_del_edge(g, ts);
 //        cout << "ts: " << ts << endl;
     }
 
@@ -371,27 +369,31 @@ auto query(const int& alpha, const int& beta, const int& ts, const int& te, BiGr
  * @param g
  */
 auto adv_tabcore_baseline(BiGraph& g) -> void {
+    auto start = chrono::system_clock::now();
+
     coreIndexKCore(g);
 
     g.tbcore_uindex.resize(2);
     g.tbcore_vindex.resize(2);
 
-    auto start = chrono::system_clock::now();
+    tab_compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
+    tab_compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
+
     // then start peeling
     for (auto ts = 0; ts < g.tmax; ts += 3) {
         // then working here
         if (ts == g.tmax - 1) break;
 
+        auto tg = g;
+        tab_back_del_edges(g, tg, ts, g.tmax - 1);
+
         // count the neighbor in the time interval ts to te
         tab_compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);
         tab_compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
 
-        auto tg = g;
-        tab_back_del_edges(g, tg, ts, g.tmax - 1);
-
         // delete the visited edges
         for (auto tmp = ts; tmp < ts + 3; tmp ++) {
-            if (ts < g.tmax) tab_advance_del_edge(g, tmp, tmp);
+            if (ts < g.tmax) tab_advance_del_edge(g, tmp);
         }
     }
 
@@ -422,7 +424,6 @@ auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te,
     if (alpha > g.tbcore_uindex.size()) return;
     if (beta > g.tbcore_uindex[alpha].size()) return;
     if (ts > g.tbcore_uindex[alpha][beta].size()) return;
-    if (g.tbcore_uindex[alpha][beta][ts].empty()) return;
 
     // select the last tts that tts <= ts
     auto tts = 0;
@@ -447,7 +448,7 @@ auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te,
         block = block->child;
     }
 
-    block = g.tbcore_vindex[beta][alpha][ts].front();
+    block = g.tbcore_vindex[beta][alpha][tts].front();
     while (block != nullptr && block->te <= te) {
         for (auto const& v: block->nodeset) tnode_v[v] = true;
         block = block->child;
