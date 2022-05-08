@@ -24,13 +24,18 @@ int main(int argc, char *argv[]) {
         auto node_v = vector<bool>();
 
 //        index_baseline(g);
-//        baseline_query(1,1,0,20, g, node_u, node_v);
+//        baseline_query(1,2,0,69, g, node_u, node_v);
+//
+        tabcore_baseline(g);
+        query(1,2,0,69, g, node_u, node_v);
 
-//        tabcore_baseline(g);
-//        query(1,1,0,20, g, node_u, node_v);
+
+//        adv_tabcore_baseline(g);
+//        query_skip(1,2,0,69, g, node_u, node_v);
 
 
-        online_peeling(2,1,0,69, g, node_u, node_v);
+
+//        online_peeling(1,2,0,69, g, node_u, node_v);
 
 
 

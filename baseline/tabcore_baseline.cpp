@@ -363,3 +363,128 @@ auto query(const int& alpha, const int& beta, const int& ts, const int& te, BiGr
     cout << endl;
 #endif
 }
+
+
+/**
+ * implement the skip storage of baseline index
+ * @param g
+ */
+auto adv_tabcore_baseline(BiGraph& g) -> void {
+    coreIndexKCore(g);
+
+    g.tbcore_uindex.resize(2);
+    g.tbcore_vindex.resize(2);
+
+    auto start = chrono::system_clock::now();
+    // then start peeling
+    for (auto ts = 0; ts < g.tmax; ts += 3) {
+        // then working here
+        if (ts == g.tmax - 1) break;
+
+        // count the neighbor in the time interval ts to te
+        tab_compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);
+        tab_compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
+
+        auto tg = g;
+        tab_back_del_edges(g, tg, ts, g.tmax - 1);
+
+        // delete the visited edges
+        for (auto tmp = ts; tmp < ts + 3; tmp ++) {
+            if (ts < g.tmax) tab_advance_del_edge(g, tmp, tmp);
+        }
+    }
+
+    cout << "finished skip structure baseline" << endl;
+
+    auto end = chrono::system_clock::now();
+    chrono::duration<double> elapsed_seconds = end - start;
+    cout << "construction: " << elapsed_seconds.count() << endl;
+
+
+#ifdef INDEX_SIZE
+    tab_vertex_index_size(g);
+#endif
+}
+
+
+/**
+ * query for skip structure index
+ */
+auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te, BiGraph& g, vector<bool>& node_u,
+           vector<bool>& node_v) -> void {
+#ifdef TIME
+    auto start = chrono::system_clock::now();
+#endif
+    node_u = vector<bool>(g.num_v1, false);
+//    node_v = vector<bool>(g.num_v2, false);
+
+    if (alpha > g.tbcore_uindex.size()) return;
+    if (beta > g.tbcore_uindex[alpha].size()) return;
+    if (ts > g.tbcore_uindex[alpha][beta].size()) return;
+    if (g.tbcore_uindex[alpha][beta][ts].empty()) return;
+
+    // select the last tts that tts <= ts
+    auto tts = 0;
+    for (; tts < g.tbcore_uindex[alpha][beta].size(); tts += 3) {
+        if (tts > ts) {
+           tts -= 3;
+            break;
+        }
+    }
+
+    auto vertex_u = vector<int>();
+    auto vertex_v = vector<int>();
+    auto block = g.tbcore_uindex[alpha][beta][tts].front();
+
+    while (block != nullptr && block->te <= te) {
+        for (auto const& u: block->nodeset) vertex_u.push_back(u);
+        block = block->child;
+    }
+
+    // then we try to find the subgraph
+    auto uDegree = vector<int>(g.num_v1, 0);
+    auto vDegree = vector<int>(g.num_v2, 0);
+
+    for (auto const& u : vertex_u) {
+        for (auto const& e : g.tnu[u]) {
+            auto v = e.first;
+            auto t = e.second;
+            // if e does not belong to the subgraph, then remove it.
+            if (t >= ts && t <= te) {
+                uDegree[u] += 1;
+                vDegree[v] += 1;
+
+                vertex_v.push_back(v);
+            }
+        }
+    }
+
+    for (auto const& u : vertex_u) {
+        if (uDegree[u] >= alpha) node_u[u] = true;
+    }
+
+    for (auto const& v : vertex_v) {
+        if (vDegree[v] >= beta) node_v[v] = true;
+    }
+
+
+#ifdef TIME
+    auto end = chrono::system_clock::now();
+    chrono::duration<double> elapsed_seconds = end - start;
+    cout << "query for tabcore: " << elapsed_seconds.count() << endl;
+#endif
+
+#ifdef PRINTABCORE
+    cout << "upper vertices: " << endl;
+    for (auto u = 0; u < node_u.size(); u ++) {
+        if (node_u[u]) cout << " " << u;
+    }
+    cout << endl;
+
+    cout << "lower vertices: " << endl;
+    for (auto v = 0; v < node_v.size(); v ++) {
+        if (node_v[v]) cout << " " << v;
+    }
+    cout << endl;
+#endif
+}
