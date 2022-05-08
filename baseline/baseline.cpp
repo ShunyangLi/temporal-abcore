@@ -72,13 +72,11 @@ auto update_index(vector<vector<vector<vector<pair<int,int>>>>>& index,
                   const vid_t& u, const int& alpha, const int& beta, BiGraph& g) -> void {
 
     if (index[u][alpha][beta].empty()) {
-//        index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts], g.time_new_to_old[te]));
         index[u][alpha][beta].push_back(make_pair(ts, te));
     } else {
         auto times = index[u][alpha][beta].back();
         if (te > times.second) {
             index[u][alpha][beta].push_back(make_pair(ts, te));
-//            index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts], g.time_new_to_old[te]));
         }
     }
 }
@@ -184,37 +182,25 @@ auto back_del_edges(BiGraph& g, BiGraph& tg,
 /**
  * delete the used edge from front to end
  */
-auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
+auto advance_del_edge(BiGraph& g, const int& _te) -> void {
 //    auto tg = g;
     auto q = queue<pair<vid_t, vid_t>>();
 
-    auto index = g.edges_idx[_te];
-    if (_te - 1 < 0) index = 0;
-    else index = g.edges_idx[_te - 1];
-
     // because there are may one more than one edge that between ts and te
-    for (; index < g.edges_idx[_te + 1]; ++index) {
+    for (auto index = g.edges_idx[_te]; index < g.edges_idx[_te + 1]; ++index) {
         auto u = g.edges[index].first;
         auto v = g.edges[index].second;
 
-        for (auto it = g.tnu[u].begin(); it != g.tnu[u].end(); ++it) {
-            if (it->first == v && it->second == _te) {
-                g.tnu[u].erase(it);
-                break;
-            }
-        }
+        // then we process u and v
+        -- g.ucn[u][v];
+        -- g.vcn[v][u];
 
-        for (auto it = g.tnv[v].begin(); it != g.tnv[v].end(); ++it) {
-            if (it->first == u && it->second == _te) {
-                g.tnv[v].erase(it);
-                break;
-            }
-        }
-
+        if (g.ucn[u][v] == 0) g.ucn[u].erase(v);
+        if (g.vcn[v][u] == 0) g.vcn[v].erase(u);
 
         // when the neighbors of u is less then a, then update
         // it is one edge, so just detect only once
-        if (g.tnu[u].size() < g.left_index[u].size() - 1 || g.tnv[v].size() < g.right_index[v].size() - 1) {
+        if (g.ucn[u].size() < g.left_index[u].size() - 1 || g.vcn[v].size() < g.right_index[v].size() - 1) {
             q.push(std::make_pair(u, v));
         }
     }
@@ -249,7 +235,7 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
 //                    auto beta = u_alpha_offset[u][alpha];
                     for (auto beta = 1; beta <= u_alpha_offset[u][alpha]; beta ++) {
                         if (!g.u_index[u][alpha][beta].empty() && g.u_index[u][alpha][beta].back().second == END) continue;
-                        g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+                        g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[_te + 1], END));
                     }
 
                 }
@@ -260,7 +246,7 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
 //                    auto beta = u_alpha_offset[u][alpha];
                     for (auto beta = int(u_alpha_offset[u][alpha]); beta > g.left_index[u][alpha]; -- beta) {
                         if (!g.u_index[u][alpha][beta].empty() && g.u_index[u][alpha][beta].back().second == END) continue;
-                        g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+                        g.u_index[u][alpha][beta].push_back(make_pair(g.time_new_to_old[_te + 1], END));
                     }
 
                 }
@@ -277,7 +263,7 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
                 for (auto beta =  v_beta_offset[v].size() - 1; beta > g.right_index[v].size() - 1; --beta) {
                     for (auto alpha = 1; alpha <= v_beta_offset[v][beta]; alpha ++) {
                         if (!g.v_index[v][beta][alpha].empty() && g.v_index[v][beta][alpha].back().second == END) continue;
-                        g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+                        g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[_te + 1], END));
                     }
                 }
             }
@@ -287,7 +273,7 @@ auto advance_del_edge(BiGraph& g, const int& ts, const int& _te) -> void {
 //                    auto alpha = v_beta_offset[v][beta];
                     for (auto alpha = int(v_beta_offset[v][beta]); alpha > g.right_index[v][beta]; alpha --) {
                         if (!g.v_index[v][beta][alpha].empty() && g.v_index[v][beta][alpha].back().second == END) continue;
-                        g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[ts + 1], END));
+                        g.v_index[v][beta][alpha].push_back(make_pair(g.time_new_to_old[_te + 1], END));
                     }
 
                 }
@@ -349,7 +335,7 @@ auto index_baseline(BiGraph& g) -> void  {
         compute_core_neighbor(ts, g.vcn, g.num_v2, g.tnv);
 
         // delete the visited edges
-        if (ts < g.tmax) advance_del_edge(g, ts, ts);
+        if (ts < g.tmax) advance_del_edge(g, ts);
 //        cout << "ts: " << ts << endl;
     }
 

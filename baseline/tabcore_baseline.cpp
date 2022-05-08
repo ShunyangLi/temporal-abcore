@@ -227,14 +227,10 @@ auto tab_advance_del_edge(BiGraph& g, const int& _te) -> void {
 //    auto tg = g;
     auto q = queue<pair<vid_t, vid_t>>();
 
-    auto index = g.edges_idx[_te];
-    if (_te - 1 < 0) index = 0;
-    else index = g.edges_idx[_te - 1];
-
     // because there are may one more than one edge that between ts and te
     for (auto index = g.edges_idx[_te]; index < g.edges_idx[_te + 1]; ++index) {
-        auto u = g.edges[index - 1].first;
-        auto v = g.edges[index - 1].second;
+        auto u = g.edges[index].first;
+        auto v = g.edges[index].second;
 
         // then we process u and v
         -- g.ucn[u][v];
