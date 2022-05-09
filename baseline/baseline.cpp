@@ -327,7 +327,7 @@ auto index_baseline(BiGraph& g) -> void  {
         if (ts == g.tmax - 1) break;
 
         auto tg = g;
-        back_del_edges(g, tg, ts, g.tmax - 1);
+        back_del_edges(g, tg, ts, g.tmax);
 
         // count the neighbor in the time interval ts to te
         compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);

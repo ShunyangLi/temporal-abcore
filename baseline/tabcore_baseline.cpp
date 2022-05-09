@@ -136,7 +136,7 @@ auto tab_back_del_edges(BiGraph& g, BiGraph& tg,
     auto q = queue<pair<vid_t, vid_t>>();
 
     // to do the loop delete edges
-    for (auto _te = tmax; _te >= ts; _te --) {
+    for (auto _te = tmax; _te >= ts; -- _te) {
 
         // because there are may one more than one edge that between ts and te
         for (auto index = tg.edges_idx[_te]; index < tg.edges_idx[_te + 1]; ++index) {
@@ -381,7 +381,7 @@ auto adv_tabcore_baseline(BiGraph& g) -> void {
         if (ts == g.tmax - 1) break;
 
         auto tg = g;
-        tab_back_del_edges(g, tg, ts, g.tmax - 1);
+        tab_back_del_edges(g, tg, ts, g.tmax);
 
         // count the neighbor in the time interval ts to te
         tab_compute_core_neighbor(ts, g.ucn, g.num_v1, g.tnu);
@@ -453,13 +453,38 @@ auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te,
 
             if (!node_u[u]) {
                 uDegree[u] ++;
-                if (uDegree[u] >= alpha) node_u[u]= true;
             }
             if (!node_v[v]) {
                 vDegree[v] ++;
-                if (vDegree[v] >= beta) node_v[v] = true;
             }
         }
+
+        // just loop again
+        for (auto index = g.edges_idx[ts]; index < g.edges_idx[tts]; index++) {
+            auto u = g.edges[index].first;
+            auto v = g.edges[index].second;
+
+            if (!node_u[u]) {
+                if (uDegree[u] < alpha) {
+                    if (!node_v[v]) --vDegree[v];
+                }
+            }
+            if (!node_v[v]) {
+                if (vDegree[v] < beta) {
+                    if (!node_u[u]) --uDegree[u] ;
+                }
+            }
+        }
+
+        for (auto const& it : uDegree) {
+            if (it.second >= alpha) node_u[it.first] = true;
+        }
+
+        for (auto const& it : vDegree) {
+            if (it.second >= beta) node_v[it.first] = true;
+        }
+
+
     }
 
 
