@@ -1,8 +1,8 @@
 CC=g++
 CPPFLAGS=-I.
 LDFLAGS=-g
-DEPS = bigraph/bigraph.h utility/utility.h abcore/abcore.h baseline/baseline.h baseline/tabcore_baseline.h
-OBJ = bigraph/bigraph.o main.o utility/utility.o abcore/abcore.o baseline/baseline.o baseline/tabcore_baseline.o
+DEPS = bigraph/bigraph.h utility/utility.h abcore/abcore.h baseline/baseline.h baseline/tabcore_baseline.h online/online.h
+OBJ = bigraph/bigraph.o main.o utility/utility.o abcore/abcore.o baseline/baseline.o baseline/tabcore_baseline.o online/online.o
 
 %.o: %.cpp $(DEPS)
 	$(CC) -std=c++1y $(LDFLAGS) -c -O3 -o $@ $< $(CPPFLAGS)
@@ -16,4 +16,5 @@ clean :
 	rm utility/*.o
 	rm abcore/*.o
 	rm baseline/*.o
+	rm online/*.o
 	rm tabcore
