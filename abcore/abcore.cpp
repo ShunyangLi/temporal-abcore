@@ -5,6 +5,9 @@ using namespace std;
 void crossUpdate_for_kcore(BiGraph& g, int alpha, int k_x, vid_t v) {
     for (int beta = k_x; beta > 0; beta--) {
         if (g.right_index[v][beta] < alpha) {
+            if (g.swaped) {
+                if (alpha > g.a_to_b[beta]) g.a_to_b[beta] = alpha;
+            }
             g.right_index[v][beta] = alpha;
         }
         else {
@@ -79,6 +82,11 @@ void alphaCopyPeel_for_kcore(int left_k, BiGraph& g) {
                 g.degree_v1[u] = 0;
                 g.left_delete[u] = true;
                 if (update_flag) {
+                    if (!g.swaped) {
+                        auto ta = left_k;
+                        auto tb = pre_;
+                        if (tb > g.a_to_b[ta]) g.a_to_b[ta] = tb;
+                    }
                     g.left_index[u][left_k] = pre_;
                 }
             }
@@ -95,6 +103,12 @@ void alphaCopyPeel_for_kcore(int left_k, BiGraph& g) {
                     if (g.left_delete[u]) continue;
                     dd_ = --g.degree_v1[u];
                     if (update_flag && dd_ == 0) {
+                        if (!g.swaped) {
+                            auto ta = left_k;
+                            auto tb = pre_;
+                            if (tb > g.a_to_b[ta]) g.a_to_b[ta] = tb;
+                        }
+
                         g.left_index[u][left_k] = pre_;
                         g.left_delete[u] = true;
                     }
@@ -143,6 +157,9 @@ int coreIndexKCore(BiGraph& g) {
     // init g's max degree and index
     g.v1_max_degree = left_degree_max;
     g.v2_max_degree = right_degree_max;
+
+    // init a_to_b
+    g.a_to_b.resize(g.getV1Num());
     g.left_index.resize(g.getV1Num());
     g.right_index.resize(g.getV2Num());
     g.left_delete.resize(g.getV1Num());
@@ -165,6 +182,7 @@ int coreIndexKCore(BiGraph& g) {
             if (g.degree_v1[u] <= left_k) continue;
             int right_k = g.left_index[u][left_k];
             if (beta_s < right_k) beta_s = right_k;
+            if (right_k > g.a_to_b[left_k]) g.a_to_b[left_k] = right_k;
         }
         if (beta_s <= left_k) break;
     }

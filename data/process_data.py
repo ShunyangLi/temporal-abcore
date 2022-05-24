@@ -19,7 +19,7 @@ def process_graph(data_graph, output, skip):
             if index > 0:
                 index -= 1
                 continue
-            
+
             line = line.replace('\n', '')
             nodes = line.split(SPLITOR)
 
@@ -53,7 +53,7 @@ def process_graph(data_graph, output, skip):
         if t not in egt:
             egt[t] = c
             c += 1
-        
+
         nodes += "{} {} {}\n".format(u_node[u], v_node[v], egt[t])
         edges_count += 1
 

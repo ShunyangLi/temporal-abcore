@@ -83,6 +83,9 @@ public:
     std::vector<num_t> core_v1;
     std::vector<num_t> core_v2;
 
+    // alpha value the beta max (alpha)
+    vector<int> a_to_b;
+    bool swaped = false;
 public:
 
     //KKCore index left (x,*) right (*,x)

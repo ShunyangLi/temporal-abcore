@@ -237,6 +237,7 @@ void inv(BiGraph& g) {
     swap(g.neighborHash_v1, g.neighborHash_v2);
     swap(g.v1_max_degree, g.v2_max_degree);
     swap(g.left_delete, g.right_delete);
+    g.swaped = !g.swaped;
 }
 
 /**

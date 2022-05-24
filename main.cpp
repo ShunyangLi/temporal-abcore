@@ -4,6 +4,7 @@
 #include "config/config.h"
 #include "online/online.h"
 #include "utility/utility.h"
+#include "adv/adv.h"
 
 using namespace std;
 

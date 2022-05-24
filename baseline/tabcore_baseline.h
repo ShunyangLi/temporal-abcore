@@ -15,5 +15,6 @@ auto query(const int& alpha, const int& beta, const int& ts, const int& te, BiGr
            vector<bool>& node_v) -> void;
 auto query_skip(const int& alpha, const int& beta, const int& ts, const int& te, BiGraph& g, vector<bool>& node_u,
                 vector<bool>& node_v) -> void;
+auto tab_vertex_index_size(BiGraph& g) -> void;
 
 #endif //TEMPORAL_ABCORE_TABCORE_BASELINE_H
