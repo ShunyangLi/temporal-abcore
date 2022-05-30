@@ -92,8 +92,6 @@ auto adv_del_edges(BiGraph& g, const int& ts, const int& te,
                     visited_v[v] = true;
                     qv.push(v);
                 }
-
-
                 for (auto const& it: g.vcn[v]) {
                     if (it.second > te) break;
                     auto tu = it.first;
@@ -109,12 +107,48 @@ auto adv_del_edges(BiGraph& g, const int& ts, const int& te,
             }
         }
 
-
-
+        // for upper just ensure alphe
         while (!qu.empty()) {
+            auto u = qu.front();
+            qu.pop();
+            visited_u[u] = false;
+
+            auto nbr_t = vector<vid_t >();
+            auto visited = vector<bool>(g.num_v2);
+
+            auto core_time = 0;
+            for (auto const& it : g.ucn[u]) {
+                if (it.second < ts) continue;
+                if (nbr_t.size() >= alpha && it.second > core_time) break;
+
+                auto v = it.first;
+
+                if (g.right_index[v].size() - 1 < beta ||
+                    g.right_index[v][beta] < alpha || visited[v]) continue;
+
+                visited[v] = true;
+
+                auto v_ct = g.v_index[v][beta][alpha].back().second;
+                nbr_t.push_back(max(it.second, v_ct));
+
+                if (nbr_t.size() <= alpha) core_time = max(core_time, v_ct);
+
+                // no more process
+                if (nbr_t.size() < alpha) {
+                    visited_u[u] = true;
+                } else {
+                    nth_element(nbr_t.begin(),nbr_t.begin()+alpha-1,nbr_t.end());
+                    cout << "ts: " << ts << " te: " << nbr_t[alpha-1] << endl;
+                }
+
+
+                // then process the neighbot
+
+            }
 
         }
 
+        // for lower just ensure beta
         while (!qv.empty()) {
 
         }
