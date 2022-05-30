@@ -10,7 +10,7 @@
  * compute the core time neighbor,
  * the CT neighbors of u is a hash table where each key is a vertex v
  * (u,v) in G[ts,te], each value of v is the number of edges (u,v,t)
- * with ts <= t <= te
+ * with ts <= t <= te, for u, core(v) >= core(u)
  * @param ts strating time
  * @param cn neighbor
  * @param num end u id
@@ -18,7 +18,6 @@
  */
 auto compute_ctn(const vid_t& ts,  const int& te,
                  const int& alpha, const int& beta, BiGraph& g) -> void {
-    // TODO te should be the end time
     for (auto index = g.edges_idx[ts]; index < g.edges_idx[te]; index++) {
         auto u = g.edges[index].first;
         auto v = g.edges[index].second;
@@ -30,21 +29,98 @@ auto compute_ctn(const vid_t& ts,  const int& te,
         if (g.right_index[v][beta] < alpha) continue;
 
         // then search the neighbor of u and v
-        
+        if (g.right_index[v][beta] >= alpha) {
+            g.ucn[u][v] += 1;
+        }
+
+        if (g.left_index[u][alpha] >= beta) {
+            g.vcn[v][u] += 1;
+        }
+    }
+}
+
+auto adv_del_edges(BiGraph& g, const int& ts, const int& te,
+                   const int& alpha, const int& beta) -> void {
+
+    auto qu = queue<vid_t>();
+    auto qv = queue<vid_t>();
+
+    for (auto _te = te; _te > ts; _te --) {
+        // try to remove the current edges, front to end
+        auto visited_u = vector<bool>(g.num_v1);
+        auto visited_v = vector<bool>(g.num_v2);
+
+        for (auto index = g.edges_idx[_te]; index < g.edges_idx[_te + 1]; ++index) {
+            auto u = g.edges[index].first;
+            auto v = g.edges[index].second;
+
+            if (g.left_index[u].size() - 1 < alpha) continue;
+            if (g.left_index[u][alpha] < beta) continue;
+            if (g.right_index[v].size() - 1 < beta) continue;
+            if (g.right_index[v][beta] < alpha) continue;
+
+            // then we process u and v
+            -- g.ucn[u][v];
+            -- g.vcn[v][u];
+
+            if (g.ucn[u][v] == 0) g.ucn[u].erase(v);
+            if (g.vcn[v][u] == 0) g.vcn[v].erase(u);
+
+            // then add it into the quenu to compute again
+            if (g.ucn[u].size() < g.left_index[u].size() - 1 ) {
+                if (!visited_u[u]) {
+                    visited_u[u] = true;
+                    qu.push(u);
+                }
+
+                for (auto const& it : g.ucn[u]) {
+                    if (it.second > te) break;
+                    auto tv = it.first;
+                    if (g.right_index[tv].size() - 1 >= beta) {
+                        if (g.right_index[tv][beta] >= alpha) {
+                            if (visited_v[tv]) continue;
+                            visited_v[tv] = true;
+                            qv.push(tv);
+                        }
+                    }
+                }
+            }
+
+            // then process lower vertices
+            if (g.vcn[v].size() < g.right_index[v].size() - 1) {
+                if(!visited_v[v]) {
+                    visited_v[v] = true;
+                    qv.push(v);
+                }
+
+
+                for (auto const& it: g.vcn[v]) {
+                    if (it.second > te) break;
+                    auto tu = it.first;
+
+                    if (g.left_index[tu].size() - 1 >= alpha) {
+                        if (g.left_index[tu][alpha] >= beta) {
+                            if (visited_u[tu]) continue;
+                            visited_u[tu] = true;
+                            qu.push(tu);
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        while (!qu.empty()) {
+
+        }
+
+        while (!qv.empty()) {
+
+        }
+
     }
 
-//    for (auto u = 0; u < u_max; u ++) {
-//        ctn[u].clear();
-//
-//        for (auto index = int(nu[u].size() - 1); index >= 0; index --) {
-//            auto v = nu[u][index].first;
-//            auto t = nu[u][index].second;
-//
-//            // because time from largest to smallest
-//            if (t < ts) break;
-//            ctn[u][v] += 1;
-//        }
-//    }
 }
 
 /**
@@ -58,19 +134,26 @@ auto tabcore_adv(BiGraph& g) -> void {
     coreIndexKCore(g);
 
     // firstly into the core number from 1 - tmax
-    // TODO
+    compute_core_neighbor(0, g.ucn, g.num_v1, g.tnu);
+    compute_core_neighbor(0, g.vcn, g.num_v2, g.tnv);
+    // compute the core number from 1-tmax
+    auto tg = g;
+    back_del_edges(g, tg, 0, g.tmax);
 
     for (auto alpha = 2; alpha < g.a_to_b.size(); alpha ++) {
         if (g.a_to_b[alpha] == 0) continue;
+
         for (auto beta = 1; beta < g.a_to_b[alpha]; beta ++) {
+            compute_ctn(0, g.tmax, alpha, beta, g);
+            // TODO then delelte edges
+            /*
+             * the delete edge is similary with baseline
+             * need to implement CTN(u)k, need to consider how to implement
+             * and how to manage the core numbers
+             */
+
             // then ts from 1 to tmax
-            for (auto ts = 0; ts < g.tmax; ++ ts) {
-                // TODO then delelte edges
-                /*
-                 * the delete edge is similary with baseline
-                 * need to implement CTN(u)k, need to consider how to implement
-                 * and how to manage the core numbers
-                 */
+            for (auto ts = 1; ts < g.tmax; ++ ts) {
 
             }
         }

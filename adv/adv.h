@@ -9,6 +9,7 @@
 #include "../config/config.h"
 #include "../abcore/abcore.h"
 #include "../baseline/tabcore_baseline.h"
+#include "../baseline/baseline.h"
 
 auto tabcore_adv(BiGraph& g) -> void;
 
